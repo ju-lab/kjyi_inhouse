@@ -1,0 +1,2 @@
+#!/bin/bash
+/home/users/kjyi/tools/datamash/1.2/bin/datamash transpose < "${1:-/dev/stdin}"

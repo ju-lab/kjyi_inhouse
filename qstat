@@ -1,0 +1,16 @@
+#!/bin/bash
+if [ ! -z $1 ]; then qstat $* ;fi
+qstat -n1 $* |
+sed '
+  1,3d
+  4 s.Job ID                 .Job_ID.
+  4 s/$/      Assign/
+  4 s/ Time  /Elapsed/g
+  5 s/-----------------//
+  5 s/$/   ------/
+  s,/.*,,
+  s/.bnode0.kaist.ac.//' |
+awk -v OFS='\t' '$10 != "C" { print $1,$2,$4,$3,$7,$8,$10,$11,$12}'|
+column  -t -s $'\t' |
+(~kjyi/src/pbs_free ; cat -) |
+less -F

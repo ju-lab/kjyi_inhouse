@@ -1,0 +1,34 @@
+#!/home/users/cjyoon/anaconda3/bin/python
+
+import re
+import os
+os.system('pbsnodes -q > ~/.pbsnodes.txt')
+file_path = os.path.expanduser('~/.pbsnodes.txt')
+with open(file_path, 'r') as f:
+    nodes = []
+    totals = []
+    jobs = []
+    for line in f:
+        if not line[0] == ' ' and not line=='\n':
+            nodes.append(line.strip())
+
+        if re.search(string=line, pattern=r'np = [0-9]+') != None:
+            total = re.sub(string=re.search(string=line, pattern=r'np = [0-9]+').group(0), pattern=r'np = ', repl='')
+            totals.append(int(total))
+            jobCounts = 0
+
+        if re.search(string=line, pattern=r'jobs = [0-9]+') != None:
+            jobCounts = len(line.split(','))
+
+
+        if re.search(string=line, pattern=r'mom_manager_port') != None:
+            jobs.append(jobCounts)
+    free = []
+    for i in range(len(nodes)):
+        free.append(str(totals[i]-jobs[i]))
+    print("Node\t" + '\t'.join(nodes))
+    print("Free\t" + '\t'.join(free))
+
+
+
+

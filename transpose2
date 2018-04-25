@@ -1,0 +1,3 @@
+#!/bin/bash
+~kjyi/src/rowsToCols -tab "${1:-/dev/stdin}" /dev/stdout
+
