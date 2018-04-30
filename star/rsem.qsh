@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -j oe
+##PBS -e /dev/null
+##PBS -o /dev/null
+cd $PBS_O_WORKDIR
+if [[ "x$FASTQ2" = "x" ]];then paired_end=false; else paired_end=true; fi &&
+mkdir -p $outdir_rsem &&
+mkdir -p $log &&
+input_absolute_path=`readlink -f $outdir_star/$sample.Aligned.toTranscriptome.out.bam` &&
+rsem_ref_abs=`readlink -f $rsem_ref` &&
+outdir_rsem_abs=`readlink -f $outdir_rsem` &&
+log_abs=`readlink -f $log` &&
+cat <<EOF > $log/$sample.02.rsem.log &&
+# Output files list
+- Genes 	$outdir_star/$sample.rsem.genes.results
+- Isoforms 	$outdir_star/$sample.rsem.isoforms.results
+
+# Log
+EOF
+python3=~kjyi/anaconda3/bin/python
+$python3 ~kjyi/src/star/RSEM.py \
+	-o $outdir_rsem \
+	--max_frag_len $rsem_max_frag_len \
+	--estimate_rspd $rsem_estimate_rspd \
+	--paired_end $paired_end \
+	--threads $THREAD \
+	$rsem_ref_abs $input_absolute_path $sample &>>$log/$sample.02.rsem.log &&
+mv $log/$sample.02.rsem.log $log/$sample.02.rsem.done
+if [ -f $log/$sample.02.rsem.log ]; then
+	mv $log/$sample.02.rsem.log $log/$sample.02.rsem.fail 
+fi

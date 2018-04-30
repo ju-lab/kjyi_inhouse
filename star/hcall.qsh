@@ -1,0 +1,95 @@
+#!/bin/bash
+#~/src/star/hcall.qsh
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+LOG=$log/$sample.03.hcall.log
+inputbam=$outdir_star/$sample.Aligned.sortedByCoord.out.bam
+metrics=$outdir_hcall/$sample.duplicates.txt
+ready=$outdir_hcall/$sample.ready.bam
+output=$outdir_hcall/$sample.hcall.vcf
+output2=$outdir_hcall/$sample.hardfilter.vcf
+mkdir -p $log $outdir_hcall
+cat << EOF > $LOG
+# Run happlotype calling pipeline
+# add RG, sort, MD, idx, split'N'trim, assign mapping quality,
+# base recalibration, calling(haplotype caller) --> calling-ready bam
+# hard filter, filter out clustered variants (3 in 35 bps windows)
+
+# Input
+input bam			$inputbam
+
+# Output
+duplicate metrics	$metrics
+calling-ready bam	$ready
+variants			$output
+filtered variant	$output2
+log					$LOG
+
+# Log
+EOF
+
+( # Logging parenthesis
+
+set -e # it makes this code stop if a subprocess exits with error
+java=/usr/java/jre1.8.0_91/bin/java
+gatk=~kjyi/tools/GATK/3.8.0/GenomeAnalysisTK.jar
+picard=~kjyi/tools/picard/2.15.0/picard.jar
+samtools=~kjyi/tools/samtools/samtools-1.5/bin/samtools
+
+echo "# add read group info, sort"
+addRG=$outdir_hcall/$sample.addRG.bam
+$java -Xmx$MEMORY -jar $picard AddOrReplaceReadGroups I=$inputbam O=$addRG \
+	SO=coordinate RGID=id RGLB=library RGPL=ILLUMINA RGPU=machine RGSM=$sample
+
+if [ ! "x$FASTQ2" == "x" ]; then
+	echo "# mark duplicates"
+	MD=$outdir_hcall/$sample.MD.bam
+	#metrics=$outdir_hcall/$sample.duplicates.txt
+	$java -Xmx$MEMORY -jar $picard MarkDuplicates I=$addRG O=$MD CREATE_INDEX=true \
+	VALIDATION_STRINGENCY=SILENT M=$metrics
+	rm $addRG
+else
+	echo "# mark duplicate skipped due to sinle end seq"
+	MD=$outdir_hcall/$sample.addRG.bam
+	$samtools index $MD
+fi
+
+echo "# Split'N'Trim and reassign mapping qualities"
+splitbam=$outdir_hcall/$sample.split.bam
+$java -Xmx$MEMORY -jar $gatk -T SplitNCigarReads -R $reference -I $MD -o $splitbam \
+	-rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS
+rm -f $MD $MD.bai
+
+echo "# BQSR"
+#ready=$outdir_hcall/$sample.ready.bam
+tmp_bqsr=$outdir_hcall/$sample.tmp_bqsr
+dbsnp=/home/users/data/02_annotation/01_GATK/02_db_snp/dbsnp_138.b37.vcf
+$java -Xmx$MEMORY -jar $gatk -T BaseRecalibrator -R $reference -knownSites $dbsnp \
+	-I $splitbam -o $tmp_bqsr
+$java -Xmx$MEMORY -jar $gatk -T PrintReads -nct $THREAD -R $reference \
+	-I $splitbam -BQSR $tmp_bqsr -o $ready
+rm $tmp_bqsr $splitbam
+
+echo "# HaplotypeCaller (variant calling)"
+#output=$outdir_hcall/$sample.hcall.vcf
+$java -Xmx$MEMORY -jar $gatk -T HaplotypeCaller -R $reference -I $ready \
+	-dontUseSoftClippedBases -stand_call_conf 20.0 -o $output
+
+echo "# Hard filtering"
+# In this step, the clustered SNPs (3 SNPs in 35 bps windows) will be filtered
+# out, because majorities of these are due to mapping error. There is a 
+# trade-off of this step, as it can filter out some clustered true variants.
+#output2=$outdir_hcall/$sample.hardfilter.vcf
+$java -Xmx$MEMORY -jar $gatk -T VariantFiltration -R $reference -V $output \
+	-window 35 -cluster 3 -filterName FS -filter "FS > 30.0" \
+	-filterName QD -filter "QD < 2.0" -o $output2
+
+) &>> $LOG # Logging parenthesis end
+
+if [ "$?" == "0" ]; then
+	mv $LOG ${LOG/%.log/.done} 
+else 
+	mv $LOG ${LOG/%.log/.fail}
+fi
+

@@ -1,0 +1,76 @@
+#!/bin/bash
+#PBS -e /dev/null
+#PBS -o /dev/null
+##PBS -j oe
+cd $PBS_O_WORKDIR
+cmd_sjdbGTFfile=`echo $sjdbGTFfile|sed 's/./--sjdbGTFfile &/'` &&
+twoPass=`echo $sjdbFileChrStartEnd|sed 's/.*/--twopassMode Basic/'` &&
+unzip=`echo $FASTQ1|grep ".gz"|sed 's/.*/--readFilesCommand zcat/'` &&
+cmd_sjdbFileChrStartEnd=`echo $sjdbFileChrStartEnd|sed 's/./--sjdbFileChrStartEnd &/'` &&
+if [ $chimSegmentMin -gt 0 ]; then
+	cmd_chim="--chimSegmentMin $chimSegmentMin --chimJunctionOverhangMin $chimJunctionOverhangMin --chimOutType $chimOutType --chimMainSegmentMultNmax $chimMainSegmentMultNmax"
+fi &&
+cmd_library=`echo $library|sed 's/./LB:&/'` &&
+cmd_platform=`echo $platform|sed 's/./PL:&/'` &&
+outSAMattrRGline="ID:$sample SM:$sample $cmd_library $cmd_platform" &&
+mkdir -p $outdir_star &&
+mkdir -p $log &&
+cat << EOF > $log/$sample.01star.log &&
+# Output files list
+bam_file		$outdir_star/${sample}.Aligned.sortedByCoord.out.bam
+bam_index		$outdir_star/${sample}.Aligned.sortedByCoord.out.bam.bai
+transcriptome_bam	$outdir_star/${sample}.Aligned.toTranscriptome.out.bam
+chimeric_junctions	$outdir_star/${sample}.Chimeric.out.junction
+chimeric_bam_file	$outdir_star/${sample}.Chimeric.out.sorted.bam
+chimeric_bam_index	$outdir_star/${sample}.Chimeric.out.sorted.bam.bai
+read_counts		$outdir_star/${sample}.ReadsPerGene.out.tab
+junctions		$outdir_star/${sample}.SJ.out.tab
+junctions_pass1		$outdir_star/${sample}._STARpass1/SJ.out.tab
+log1			$outdir_star/${sample}.Log.final.out
+log2			$outdir_star/${sample}.Log.out
+log3			$outdir_star/${sample}.Log.progress.out
+
+# Log
+EOF
+star=~kjyi/tools/STAR/STAR-2.5.4b/bin/Linux_x86_64/STAR
+samtools=~kjyi/tools/samtools/samtools-1.5/bin/samtools
+$star --runMode alignReads --runThreadN $THREAD --genomeDir $star_index \
+	--readFilesIn $FASTQ1 $FASTQ2 $unzip \
+	--outFileNamePrefix $outdir_star/$sample. \
+	$cmd_sjdbGTFfile $twoPass \
+	--outFilterMultimapNmax $outFilterMultimapNmax \
+	--alignSJoverhangMin $alignSJoverhangMin \
+	--alignSJDBoverhangMin $alignSJDBoverhangMin \
+	--outFilterMismatchNmax $outFilterMismatchNmax \
+	--outFilterMismatchNoverLmax $outFilterMismatchNoverLmax \
+	--alignIntronMin $alignIntronMin \
+	--alignIntronMax $alignIntronMax \
+	--alignMatesGapMax $alignMatesGapMax \
+	--outFilterType $outFilterType \
+	--outFilterScoreMinOverLread $outFilterScoreMinOverLread \
+	--outFilterMatchNminOverLread $outFilterMatchNminOverLread \
+	--limitSjdbInsertNsj $limitSjdbInsertNsj \
+	--outSAMstrandField $outSAMstrandField \
+	--outFilterIntronMotifs $outFilterIntronMotifs \
+	--alignSoftClipAtReferenceEnds $alignSoftClipAtReferenceEnds \
+	--quantMode $quantMode \
+	--outSAMtype $outSAMtype \
+	--outSAMunmapped $outSAMunmapped \
+	--outSAMattributes $outSAMattributes \
+	--outSAMattrRGline $outSAMattrRGline \
+	--genomeLoad $genomeLoad \
+	$cmd_chim $cmd_sjdbFileChrStartEnd &>> $log/$sample.01.star.log &&
+rm -rf $outdir_star/${sample}._STARgenome &&
+rm -rf $outdir_star/${sample}._STARtmp &&
+$samtools sort --threads $THREAD -o $outdir_star/${sample}.Aligned.sortedByCoord.out.bam $outdir_star/${sample}.Aligned.out.bam &>> $log/$sample.01.star.log &&
+rm $outdir_star/${sample}.Aligned.out.bam &&
+$samtools index $outdir_star/${sample}.Aligned.sortedByCoord.out.bam &>> $log/$sample.01.star.log &&
+if [ $chimSegmentMin -gt 0 ]; then
+	$samtools sort --threads $THREAD -o $outdir_star/${sample}.Chimeric.out.sorted.bam $outdir_star/${sample}.Chimeric.out.sam &>> $log/$sample.01.star.log &&
+	rm $outdir_star/${sample}.Chimeric.out.sam &&
+	$samtools index $outdir_star/${sample}.Chimeric.out.sorted.bam &>> $log/$sample.01.star.log
+fi &&
+mv $log/$sample.01.star.log $log/$sample.01.star.done 
+if [ -f $log/$sample.01.star.log ];then
+	mv $log/$sample.01.star.log $log/$sample.01.star.fail
+fi

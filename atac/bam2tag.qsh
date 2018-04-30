@@ -1,0 +1,102 @@
+#!/bin/bash
+#~/src/atac/bam2tag.qsh
+##PBS -e /dev/null
+##PBS -e /dev/null
+#PBS -j oe
+cd $PBS_O_WORKDIR
+LOG=$log/$sample.03.bam2tag.log
+input=$output_bam/$sample.bam
+output1=$output_bam/$sample.nameSort.bam
+output2=$output_sig/$sample.bedpe.gz
+output3=$output_sig/$sample.tagAlign.gz
+output4=$output_sig/$sample.sampledR1.tagAlign.gz
+output5=$output_sig/$sample.tn5.tagAlign.gz
+mkdir -p $log $output_sig
+cat <<EOF > $LOG &&
+# bam2tag.qsh `date` $PBS_O_HOST $PBS_JOBID
+# -----------
+# input
+filtered bam:	$input
+
+# output
+name sorted bam	$output1
+BED file (with read pairs on each line, 3+3 format, if PE) 
+				$output2
+tagAlign file (virtual single end, if PE) 
+				$output3
+tn5_shifted tagAlign file $output5
+Subsampled tagAlignfile for cross correlation analysis
+				$output4
+
+# log
+EOF
+
+bedtools=~kjyi/bin/bedtools
+sambamba=~kjyi/tools/sambamba-0.6.7/sambamba
+
+if [ "x$FASTQ2" == "x" ]; then
+    # Single End Sequencing pipeline
+	# ------------------------------
+    # tagAlign file
+	echo "# tagAlign" >> $LOG &&
+    $bedtools bamtobed -i $input 2>>$LOG | \
+	awk 'BEGIN{OFS="\t"}{$4="N";$5="1000";print $0}' 2>>$LOG | \
+	gzip -nc > $output3 &&
+    
+	# subsample tagAlign file
+	echo "# subsample tagAlign" >> $LOG &&
+    N=25000000 &&
+    zcat $output3 2>>$LOG | grep -v "chrM" | grep -v "MT" | \
+	shuf -n $N --random-source=$output3 2>>$LOG | gzip -nc > $output4 &&
+
+	# tn5 shift
+	echo "# tn5 shift" >> $LOG &&
+	zcat $output3 | \
+		awk -F $'\t' 'BEGIN {OFS = FS}{if ($6 == "+"){$2 = $2 + 4} else if ($6 == "-") {$3 = $3 - 5} print $0}' | \
+		gzip -nc > $output5 &&
+
+	# log
+    mv $LOG ${LOG/.log/.done}
+    if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail}; exit 1; fi
+
+else
+
+    # Paired-End Sequencing pipeline
+	# ------------------------------
+    # name sort
+	echo "# name sort" >> $LOG &&
+    $sambamba sort -n $input -o $output1 --tmpdir=$output_bam -t 3 \
+	-m 20GB 2>>$LOG &&
+
+    # BEDPE file
+	echo "# BEDPE" >> $LOG &&
+    $bedtools bamtobed -bedpe -mate1 -i $output1 2>>$LOG | \
+	gzip -nc 2>>$LOG > $output2 &&
+
+    # tagAlign file
+	echo "# tagAlign" >> $LOG &&
+    zcat $output2 2>>$LOG | 
+	awk 'BEGIN{OFS="\t"}
+	{
+	    printf "%s\t%s\t%s\tN\t1000\t%s\n%s\t%s\t%s\tN\t1000\t%s\n",$1,$2,$3,$9,$4,$5,$6,$10
+	}' 2>>$LOG | gzip -nc 2>>$LOG > $output3 &&
+
+    # subsample tagAlign file
+	echo "# subsample tagAlign" >> $LOG &&
+    N=25000000  &&
+    zcat $output2 2>>$LOG | grep -v “chrM” | grep -v "MT" | \
+	shuf -n $N --random-source=$output2 2>>$LOG | \
+        awk 'BEGIN{OFS="\t"}{print $1,$2,$3,"N","1000",$9}' 2>>$LOG | \
+	gzip -nc 2>>$LOG 1> $output4 &&
+
+	# tn5 shift
+	echo "# tn5 shift" >> $LOG &&
+	zcat $output3 | \
+		awk -F $'\t' 'BEGIN {OFS = FS}{if ($6 == "+"){$2 = $2 + 4} else if ($6 == "-") {$3 = $3 - 5} print $0}' | \
+		gzip -nc > $output5 &&
+
+	# log
+    mv $LOG ${LOG/.log/.done}
+    if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail}; exit 1; fi
+
+fi

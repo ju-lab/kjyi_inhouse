@@ -1,0 +1,59 @@
+#!/bin/bash
+#~/src/atac/bowtie2.qsh
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+LOG=$log/$sample.01.align.log
+case $bwt2_idx in
+	hg19) bwt2_idx=~kjyi/ref/hg19/bowtie2_index/hg19 ;;
+	hg38) bwt2_idx=~kjyi/ref/hg38/bowtie2_index/hg38 ;;
+	mm10) bwt2_idx=~kjyi/ref/mm10/bowtie2_index/mm10 ;;
+esac
+
+mkdir -p $log $output_bam $output_qc
+cat << EOF > $LOG &&
+# intput
+sample name:	$sample
+fastq:		$FASTQ1 $FASTQ2
+bowtie2 index:	$bwt2_idx
+multimapping:	$multimapping
+thread:		$thread
+memory:		$memory
+
+# output
+log:		$LOG
+raw bam:	$output_bam/raw.$sample.bam
+
+# log
+EOF
+
+samtools=~kjyi/tools/samtools/samtools-1.6/bin/samtools
+bowtie2=/home/users/tools/bowtie2/bowtie2-2.2.9/bowtie2
+#bowtie2 -U <(zcat -f $FASTQ1) 
+if [ "x$FASTQ2" == "x" ]; then
+	echo "Single-end mapping" >>$LOG &&
+	$bowtie2 -U $FASTQ1 \
+		-k $multimapping \
+		--local \
+		-x $bwt2_idx \
+		--threads $thread 2>> $LOG | 
+	$samtools view -Su /dev/stdin 2>> $LOG | \
+	$samtools sort --threads $thread -T $output_bam/tmp.$sample \
+		-o $output_bam/raw.$sample.bam 2>> $LOG &&
+	mv $LOG ${LOG/align.log/align.done}
+	if [ -f $LOG ]; then mv $LOG ${LOG/align.log/align.fail}; exit 1; fi
+else
+	echo "Paired-end mapping" >> $LOG &&
+	$bowtie2 -1 $FASTQ1 -2 $FASTQ2 \
+		-k $multimapping \
+		--local \
+		-X 2000 \
+		-x $bwt2_idx \
+		--threads $thread 2>> $LOG | 
+	$samtools view -Su /dev/stdin 2>> $LOG | \
+	$samtools sort --threads $thread -T $output_bam/tmp.$sample \
+		-o $output_bam/raw.$sample.bam 2>> $LOG &&
+	mv $LOG ${LOG/align.log/align.done
+	if [ -f $LOG ]; then mv $LOG ${LOG/align.log/align.fail}; exit 1;fi
+fi
+

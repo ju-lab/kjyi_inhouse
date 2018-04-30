@@ -1,0 +1,36 @@
+#!/bin/bash
+#~/src/bam/xcor.qsh
+#PBS -e /dev/null
+#PBS -o /dev/null
+##PBS -j oe
+cd $PBS_O_WORKDIR
+LOG=$log/$sample.04.xcor.log
+input=$output_sig/$sample.sampledR1.tagAlign.gz
+output1=$output_qc/d.$sample.xc_score.txt
+output2=$output_qc/e.$sample.xc_plot.pdf
+mkdir -p $output_qc $log
+cat <<EOF > $LOG &&
+# $0
+# -----------
+# input
+tagAlign file	$input
+
+# output
+cross correlation score   $output1
+cross correlation plot    $output2
+
+# log
+EOF
+Rscript=~kjyi/tools/R/R-3.4.0/bin/Rscript &&
+$Rscript ~kjyi/src/atac/run_spp.R -c=$input -p=$thread -filtchr=chrM,MT -savp=$output2 -out=$output1 &>>$LOG &&
+sed -r 's/,[^\t]+//g' $output1 2>>$LOG 1> $output1.tmp &&
+cat << EOF > $output1 &&
+## Normalized strand cross-correlation coefficient (NSC) = col9
+## Relative strand cross-correlation coefficient (RSC) = col10
+## Estimate fragment length = col3 in outFile, take the top value
+Filename    numReads	estFragLen  corr_estFragLen PhantomPeak	corr_phantomPeak    argmin_corr	min_corr    phantomPeakCoef relPhantomPeakCoef	QualityTag
+EOF
+cat $output1.tmp >> $output1 &&
+rm $output1.tmp &&
+mv $LOG ${LOG/.log/.done.log}
+if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail.log}; exit 1; fi

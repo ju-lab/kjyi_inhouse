@@ -1,0 +1,5 @@
+#!/bin/bash
+#PBS -j oe
+##PBS -o /dev/null
+##PBS -e /dev/null
+

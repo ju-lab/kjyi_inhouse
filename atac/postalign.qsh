@@ -1,0 +1,152 @@
+#!/bin/bash
+#~/src/atac/postalign.qsh
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+LOG=$log/$sample.02.postalign.log
+input=$output_bam/raw.$sample.bam
+output=$output_bam/$sample.bam
+flagstat=$output_qc/a.$sample.flagstat.txt
+dupstat=$output_qc/b.$sample.duplicates.txt
+libcomp=$output_qc/c.$sample.library_complexity.txt
+mkdir -p $log $output_qc
+cat << EOF > $LOG &&
+# postalign.qsh `date` $PBS_O_HOST $PBS_JOBID
+# -------------
+# intput
+sample name:	$sample
+raw bam:	$input
+multimapping parameter	$multimapping
+
+# output
+filtered,dedup bam:	$output
+
+# QC output
+log:			$LOG
+flagstat metric:	$flagstat
+dulicates metric:	$dupstat
+library complexity:	$libcomp
+
+# log
+EOF
+
+sambamba=~kjyi/tools/sambamba-0.6.7/sambamba
+samtools=~kjyi/tools/samtools/samtools-1.6/bin/samtools
+java=/usr/java/jre1.8.0_91/bin/java
+picard=~kjyi/tools/picard/2.15.0/picard.jar
+bedtools=~kjyi/tools/bedtools/bedtools-2.19.1/bin/bedtools
+
+if [ "x$FASTQ2" == "x" ]; then 
+# Single-End Sequencing Pipeline -- not tested
+# Remove unmapped, mate unmapped, not primary alignment, reads failing platform
+# -----------------------------------------------------------------------------
+# lexicographical sorting | assign_multimapper.py | filter | sort
+    
+    $sambamba sort -n $input \
+	--tmpdir=$output_bam -t 4 -m 16GB \
+	-o $output_bam/qname_sort.$sample.bam 2>>$LOG && echo "#1" >> $LOG &&
+    $samtools view -h $output_bam/qname_sort.$sample.bam 2>>$LOG | \
+	~kjyi/src/atac/assign_multimapper.py -k $multimapping 2>>$LOG | \
+	$samtools view -F 1804 -Su /dev/stdin 2>>$LOG | \
+	$sambamba sort /dev/stdin \
+		--tmpdir=$output_bam \
+		-o $output_bam/filtered.$sample.bam &>>$LOG && echo "#2" >> $LOG &&
+	rm -f $output_bam/qname_sort.$sample.bam &>>$LOG && echo "#3" >> $LOG &&
+# mark duplicates --require large memory
+	mkdir -p $output_bam/tmp_$sample &&
+	$java -Xmx16G -jar $picard MarkDuplicates \
+		REMOVE_DUPLICATES=false \
+		VALIDATION_STRINGENCY=LENIENT \
+		ASSUME_SORTED=true \
+		METRICS_FILE=$dupstat \
+		TMP_DIR=$output_bam/tmp_$sample \
+		INPUT=$output_bam/filtered.$sample.bam \
+		OUTPUT=$output_bam/markdup.$sample.bam 2>>$LOG && echo "#4" >> $LOG &&
+	rm -rf $output_bam/tmp_$sample &&
+	rm -f $output_bam/filtered.$sample.bam &>>$LOG && echo "#5" >> $LOG &&
+# remove duplicates && sort && index
+	$samtools view -@ 4 -F 1804 -b $output_bam/markdup.$sample.bam 2>>$LOG 1> $output &&  echo "#6" >> $LOG &&
+	$sambamba index -@ 4 $output &>>$LOG &&  echo "#7" >> $LOG &&
+# mapping status 
+	echo "# Flagstat of raw alignment file ($input)" > $flagstat &&
+	$samtools flagstat -@ 4 $input 2>>$LOG 1>> $flagstat && echo "#7.5" >> $LOG &&
+	echo "# Flagstat of filtered alignment file ($output)" >> $flagstat &&
+	$samtools flagstat -@ 4 $output 2>>$LOG 1>> $flagstat &&  echo "#8" >> $LOG &&
+# Compute library complexity
+# --------------------------
+# sort by position and strand, obtain unique count statistics
+	cat << EOF > $libcomp && echo "#9" >> $LOG &&
+## NRF(non redundant fraction)=Distinct/total
+## PBC1(PCR Bottleneck coefficient 1)=OnePair/Distinct
+## PBC2(PCR Bottleneck coefficient 2)=OnePair/TwoPair
+## PBC1 is primary measure. Provisionally 0-0.5 is severe bottleneck,
+##  .5~.8 moderate bottleneck, .8~.9 mild ,.9~1 no bottleneck
+totalReadPair	distinctReadPair	oneReadPair	twoReadPair	NRF	PBC1	PBC2"
+EOF
+    $bedtools bamtobed -i $output_bam/markdup.$sample.bam 2>>$LOG | \
+	awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$6}' | \
+	grep -v "chrM" | grep -v "MT" | sort | uniq -c | \
+	awk 'BEGIN{mt=0;m0=0;m1=0;m2=0}($1==1){m1=m1+1}($1==2){m2=m2+1}{m0=m0+1}{mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n",mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}' 2>>$LOG >> $libcomp &&  echo "#10" >> $LOG &&
+	rm $output_bam/markdup.$sample.bam &&
+	mv $LOG ${LOG/.log/.done}
+	if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail}; exit 1;fi
+else
+# Paired-end sequencing pipeline
+# remove unmapped 
+	$samtools view -F 524 -f 2 -u $input 2>>$LOG | \
+	$sambamba sort -n /dev/stdin \
+		--tmpdir=$output_bam -t 4 -m 16GB \
+		-o $output_bam/tmp_filt.$sample.bam 2>>$LOG && echo "#1" >> $LOG &&
+	$samtools view -h $output_bam/tmp_filt.$sample.bam 2>>$LOG | \
+	~kjyi/src/atac/assign_multimapper.py -k $multimapping --paired-end 2>>$LOG | \
+	$samtools fixmate -r /dev/stdin $output_bam/tmp_filt_fixmate.$sample.bam 2>>$LOG && echo "#2" >> $LOG &&
+# remove orphan (paire was removed), and read pairs in different chromosomes, sort
+	$samtools view -F 1804 -f 2 -u $output_bam/tmp_filt_fixmate.$sample.bam 2>>$LOG | \
+	$sambamba sort \
+		--tmpdir=$output_bam -t 4 -m 16GB \
+		/dev/stdin -o $output_bam/filtered.$sample.bam 2>>$LOG && echo "#3" >> $LOG &&
+	rm -f $output_bam/tmp_filt_fixmate.$sample.bam 2>>$LOG && echo "#4" >> $LOG &&
+	rm -f $output_bam/tmp_filt.$sample.bam 2>>$LOG && echo "#5" >> $LOG &&
+# Mark duplicates
+	mkdir -p $output_bam/tmp_$sample &&
+	$java -Xmx16G -jar $picard MarkDuplicates \
+		REMOVE_DUPLICATES=false \
+		VALIDATION_STRINGENCY=LENIENT \
+		ASSUME_SORTED=true \
+		METRICS_FILE=$dupstat \
+		TMP_DIR=$output_bam/tmp_$sample \
+		INPUT=$output_bam/filtered.$sample.bam \
+		OUTPUT=$output_bam/markdup.$sample.bam 2>>$LOG && echo "#6" >> $LOG &&
+	rm -rf $output_bam/tmp_$sample &&
+	rm -f $output_bam/filtered.$sample.bam &>>$LOG &&  echo "#7" >> $LOG &&
+# remove duplicates && sort && index
+	$samtools view -@ 4 -F 1804 -f 2 -b $output_bam/markdup.$sample.bam 2>>$LOG 1> $output &&  echo "#8" >> $LOG &&
+	$sambamba index -t 4 $output &>>$LOG &&  echo "#9" >> $LOG &&
+# mapping status 
+	echo "# Flagstat of raw alignment file ($input)" > $flagstat &&
+	$samtools flagstat -@ 4 $input 2>>$LOG 1>> $flagstat && echo "#10" >> $LOG &&
+	echo "# Flagstat of filtered alignment file ($output)" >> $flagstat &&
+	$samtools flagstat -@ 4 $output 2>>$LOG 1>> $flagstat &&  echo "#11" >> $LOG &&
+# Compute library complexity
+# --------------------------
+# sort by position and strand, obtain unique count statistics
+	cat << EOF > $libcomp && echo "#10" >> $LOG &&
+## NRF(non redundant fraction)=Distinct/total
+## PBC1(PCR Bottleneck coefficient 1)=OnePair/Distinct
+## PBC2(PCR Bottleneck coefficient 2)=OnePair/TwoPair
+## PBC1 is primary measure. Provisionally 0-0.5 is severe bottleneck,
+##  .5~.8 moderate bottleneck, .8~.9 mild ,.9~1 no bottleneck
+totalReadPair	distinctReadPair	oneReadPair	twoReadPair	NRF	PBC1	PBC2"
+EOF
+	$sambamba sort -t 4 -m 16GB -n $output_bam/markdup.$sample.bam -o $output_bam/lexi.$sample.bam &&  echo "#12" >> $LOG &&
+	$bedtools bamtobed -bedpe -i $output_bam/lexi.$sample.bam 2>>$LOG | \
+	    awk 'BEGIN{OFS="\t"}{print $1,$2,$4,$6,$9,$10}' | \
+	    grep -v "chrM" | grep -v "MT" | sort | uniq -c | \
+	    awk 'BEGIN{mt=0;m0=0;m1=0;m2=0}($1==1){m1=m1+1}($1==2){m2=m2+1}{m0=m0+1}{mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n",mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}' 2>>$LOG >> $libcomp &&  echo "#13" >> $LOG &&
+	rm -f $output_bam/lexi.$sample.bam &&
+	rm -f $output_bam/markdup.$sample.bam &&
+	
+	mv $LOG ${LOG/.log/.done}
+	if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail}; exit 1; fi
+fi
+

@@ -1,0 +1,16 @@
+
+local({
+options(stringsAsFactors=FALSE)
+options(max.print=100)
+options(scipen=999)
+options(menu.graphics=FALSE)
+q <- function (save="no", ...) {
+    quit(save=save, ...)
+}
+options(repos = c(CRAN="https://cloud.r-project.org/"))
+#Sys.setenv(PATH="/home/users/kjyi/anaconda3/bin:/home/users/kjyi/tools/texlive/bin/x86_64-linux:/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin:/home/users/kjyi/tools/bedtools2/bin:/home/users/kjyi/tools/bedops-2.4.30:/home/users/kjyi/bin")
+##Sys.setenv(PATH="/home/users/kjyi/tools/texlive/bin/x86_64-linux:/home/users/kjyi/.lib/gcc-5.4.0/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin:/home/users/kjyi/tools/bedtools2/bin:/home/users/kjyi/tools/bedops-2.4.30:/home/users/kjyi/bin")
+##Sys.setenv(LD_LIBRARY_PATH="/home/users/kjyi/tools/gsl/2.4/lib:/home/users/kjyi/.lib/gcc-5.4.0/lib:/home/users/kjyi/.lib/gcc-5.4.0/lib64:/home/users/kjyi/tools/R/R-3.4.0/lib64/R/lib::/lib://home/users/kjyi/.lib/zlib-1.2.11/lib://home/users/kjyi/.lib/bzip2-1.0.6/lib://home/users/kjyi/.lib/xz-5.2.3/lib://home/users/kjyi/.lib/pcre-8.40/lib://home/users/kjyi/.lib/curl-7.54.0/lib:/home/users/kjyi/.lib/zlib-1.2.11/lib:/home/users/kjyi/.lib/bzip2-1.0.6/lib:/home/users/kjyi/.lib/xz-5.2.3/lib:/home/users/kjyi/.lib/pcre-8.40/lib:/home/users/kjyi/.lib/curl-7.54.0/lib:/usr/java/jre1.8.0_77/lib/amd64/server")
+#Sys.setenv(LD_LIBRARY_PATH="/home/users/kjyi/anaconda3/lib:/home/users/kjyi/anaconda3/lib64:/home/users/kjyi/tools/gsl/2.4/lib:/home/users/kjyi/tools/R/R-3.4.0/lib64/R/lib::/lib://home/users/kjyi/.lib/zlib-1.2.11/lib://home/users/kjyi/.lib/bzip2-1.0.6/lib://home/users/kjyi/.lib/xz-5.2.3/lib://home/users/kjyi/.lib/pcre-8.40/lib://home/users/kjyi/.lib/curl-7.54.0/lib:/home/users/kjyi/.lib/zlib-1.2.11/lib:/home/users/kjyi/.lib/bzip2-1.0.6/lib:/home/users/kjyi/.lib/xz-5.2.3/lib:/home/users/kjyi/.lib/pcre-8.40/lib:/home/users/kjyi/.lib/curl-7.54.0/lib:/usr/java/jre1.8.0_77/lib/amd64/server")
+})
+

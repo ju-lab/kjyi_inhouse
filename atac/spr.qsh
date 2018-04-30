@@ -1,0 +1,61 @@
+#!/bin/bash
+#~/src/bam/spr.qsh
+##PBS -e /dev/null
+##PBS -o /dev/null
+#PBS -j oe
+cd $PBS_O_WORKDIR
+
+LOG=$log/$sample.04.spr.log
+input=$output_sig/$sample.tn5.tagAlign.gz
+output1=$output_sig/$sample.pr1.tagAlign.gz
+output2=$output_sig/$sample.pr2.tagAlign.gz
+
+cat << EOF > $LOG
+# spr.qsh     `date` $PBS_O_HOST $PBS_JOBID
+# -------
+# input
+tagAlign    $input
+
+# output
+pseudoreplicate 1   $output1
+pseudoreplicate 2   $output2
+
+# log
+EOF
+if [ "x$FASTQ2" == "x" ]; then
+    # Get total number of read pairs
+    nlines=$( zcat $input 2>>$LOG | wc -l ) &&
+    nlines=$(( (nlines + 1)/2 )) &&
+    # Shuffle and split BED file into 2 equal parts
+    zcat $input 2>>$LOG | shuf --random-source=$input 2>>$LOG | \
+	split -d -l $nlines - $input.tmp 2>>$LOG && # will produce $input.tmp00 $input.tmp01
+    
+    # Convert reads into standard tagAlign file
+    gzip -nc $input.tmp00 2>>$LOG > $output1 &&
+    gzip -nc $input.tmp01 2>>$LOG > $output2 &&
+    
+    mv $LOG ${LOG/.log/.done}
+    if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail}; exit 1; fi
+
+else
+
+    # make temporary bed file
+    joined=${input/.tagAlign.gz/.tmpBedpe} &&
+    zcat $input | sed 'N;s/\n/\t/' 2>>$LOG | gzip -nc > $joined &&
+    
+    # Get total number of read pairs
+    nlines=$( zcat $joined | wc -l ) &&
+    nlines=$(( (nlines + 1)/2 )) &&
+    
+    # Shuffle and split BED file into 2 equal parts
+    zcat -f $joined 2>>$LOG | shuf --random-source=$input 2>>$LOG | \
+	split -d -l $nlines - $input.tmp 2>>$LOG && # will produce $input.tmp00 $input.tmp01
+
+    # Convert fake BEDPE to reads into standard tagAlign file
+    awk 'BEGIN{OFS="\t"}{printf "%s\t%s\t%s\t%s\t%s\t%s\n%s\t%s\t%s\t%s\t%s\t%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12}' "$input.tmp00" 2>>$LOG | gzip -nc 2>>$LOG > $output1 &&
+    awk 'BEGIN{OFS="\t"}{printf "%s\t%s\t%s\t%s\t%s\t%s\n%s\t%s\t%s\t%s\t%s\t%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12}' "$input.tmp01" 2>>$LOG | gzip -nc 2>>$LOG > $output2 &&
+    rm -f $input.tmp00 $input.tmp01 $joined &>>$LOG &&
+
+    mv $LOG ${LOG/.log/.done}
+    if [ -f $LOG ]; then mv $LOG ${LOG/.log/.fail} exit 1; fi
+fi

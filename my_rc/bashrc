@@ -1,0 +1,134 @@
+# load other bash configurations
+
+if [ -f /etc/bashrc ]; then
+		. /etc/bashrc
+fi
+
+# User alias
+
+#alias wget='wget --no-check-certificate'
+alias lc="(wc -l | cut -f1)<<"
+alias wget='curl -LO'
+alias sl='sl -e'
+alias find='find -L'
+alias ls='/bin/ls --group-directories-first --width=$((echo 90; echo $(tput col)) | sort -n | head -1) --color=tty --hide "*.Rproj" --hide "*.nb.html" --hide "samtools.*.tmp.*.bam"'
+alias l='/bin/ls --group-directories-first -1 --color=tty --hide "*.Rproj" --hide "*.nb.html" --hide "samtools.*.tmp.*.bam"'
+alias la='/bin/ls --group-directories-first --width=80 --color=tty -lAC'
+alias ll='/bin/ls --group-directories-first --width=80 --color=tty --hide "*.Rproj" --hide "*.nb.html" -ltrG --time-style="+%Y/%m/%d %H:%M"'
+alias cp='cp -i'
+alias mv='mv -i'
+alias qst='qstat -u kjyi'
+alias qigv='qsub -X -l mem=8G'
+alias setr='eval `setR`'
+alias unsetr='eval `setR a`'
+alias tree='tree -l'
+# java .jar files path in MYJARPATH
+export MYJARPATH=$HOME/jars
+
+# C compile envrionment
+LD_LIBRARY_PATH=$HOME/.lib/gcc-5.4.0/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/gcc-5.4.0/lib64:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/htslib-1.5/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/pcre-8.40/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/xz-5.2.3/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/bzip2-1.0.6/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/libevent-2.1.8/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/zlib-1.2.11/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/libssh2-1.80/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/tools/gsl/1.6/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/curl-7.54.1/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$HOME/.lib/openssl/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+CPATH=$HOME/.lib/htslib-1.5/include:$LD_LIBRARY_PATH
+CPATH=$HOME/.lib/pcre-8.40/include
+CPATH=$HOME/.lib/xz-5.2.3/include:$CPATH
+CPATH=$HOME/.lib/bzip2-1.0.6/include:$CPATH
+CPATH=$HOME/.lib/libevent-2.1.8/include:$CPATH
+CPATH=$HOME/.lib/zlib-1.2.11/include:$CPATH
+CPATH=$HOME/.lib/libssh2-1.80/include:$CPATH
+CPATH=$HOME/.lib/gcc-5.4.0/include:$CPATH
+CPATH=$HOME/tools/gsl/1.6/include:$CPATH
+CPATH=$HOME/.lib/curl-7.54.1/include:$CPATH
+CPATH=$HOME/.lib/openssl/include:$CPATH
+export CPATH
+
+# PATH environment
+PATH=/usr/bin:$PATH
+PATH=/usr/java/jre0.8.0_91/bin:$PATH
+PATH=$HOME/anaconda3/bin:$PATH
+PATH=$HOME/../tools/battenberg/bin:$PATH
+PATH=$HOME/.lib/gcc-5.4.0/bin:$PATH
+PATH=$HOME/bin:$PATH
+PATH=$HOME/tools/texlive/bin/x86_64-linux:$PATH
+PATH=$HOME/tools/gsl/1.6/bin:$PATH
+PATH=$HOME/.lib/curl-7.54.1/bin:$PATH
+PATH=$HOME/.lib/openssl/bin:$PATH
+
+export PATH
+
+#PERL5LIB=$HOME/../tools/battenberg/lib/perl5:$PERL5LIB
+#export PERL5LIB
+
+# User PS1 with git info
+. ~/.git_PS1
+
+# autocompletion with tab key
+if [ "`tty`" != "not a tty"  ]; then
+	bind 'set show-all-if-ambiguous on'
+	bind 'TAB:menu-complete'
+fi
+
+
+# added by perlbrew
+source /home/users/kjyi/perl5/perlbrew/etc/bashrc
+
+# User functions
+# track dir -----------------------------------------------------------------
+cd_func ()
+{
+	local x2 the_new_dir adir index
+	local -i cnt
+	if [[ $1 == "--"  ]]; then
+		dirs -v
+		return 0
+	fi
+	the_new_dir=$1
+	[[ -z $1 ]] && the_new_dir=$HOME
+	if [[ ${the_new_dir:0:1} == "-" ]]; then
+		# Extract dir N from dirs
+		index=${the_new_dir:1}
+		[[ -z $index ]] && index=1
+		adir=$(dirs +$index)
+		[[ -z $adir ]] && return 1
+		the_new_dir=$adir
+	fi
+	# ~ has to be substitued by ${HOME}
+	#[[ ${the_new_dir:0:1} == "~" ]] && the_new_dir="${HOME}${the_new_dir:1}"
+	[[ ${the_new_dir:0:1} == "~" ]] && the_new_dir="${HOME}${the_new_dir:1}"
+	pushd "${the_new_dir}" > /dev/null
+	[[ $? -ne 0 ]] && return 1
+	the_new_dir=$(pwd)
+	pwd > $HOME/.path_history
+	popd -n +11 2>/dev/null 1>/dev/null
+       	for ((cnt=1; cnt <= 10; cnt++)); do
+	       	x2=$(dirs +${cnt} 2>/dev/null)
+	       	[[ $? -ne 0 ]] && return 0
+	       	[[ ${x2:0:1} == "~" ]] && x2="${HOME}${x2:1}"
+	       	if [[ "${x2}" == "${the_new_dir}" ]];then
+		       	popd -n +$cnt 2>/dev/null 1>/dev/null
+		       	cnt=cnt-1
+	       	fi
+       	done 
+	return 0	
+}
+alias cd=cd_func
+# if not running interactive, don't go to lastly visited directory
+case $- in
+	*i*) cd $(cat $HOME/.path_history);;
+	*) cd $HOME/Projects ;;
+esac
+### -------------------------------------------------------
+
+
+
+

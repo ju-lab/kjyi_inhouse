@@ -1,0 +1,10 @@
+#!/bin/bash
+#~/src/atac/tn5.qsh
+##PBS -e /dev/null
+##PBS -o /dev/null
+#PBS -j oe
+cd $PBS_O_WORKDIR
+
+LOG=$log/$sample.05.tn5.log
+input=$output_sig/$sample.tagAlign.gz
+

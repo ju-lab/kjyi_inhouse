@@ -1,0 +1,188 @@
+" Plugins
+call plug#begin()
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+Plug 'jiangmiao/auto-pairs'
+Plug 'KeitaNakamura/neodark.vim'
+call plug#end()
+
+
+" Shortkeys
+map <F1> :NERDTreeToggle<CR>
+"noremap 3  :set nonumber!<CR>
+set number
+"nnoremap 4 :set nowrap!<CR>
+set wrap
+"noremap 5 :let @/ = ""<CR>
+noremap <esc> :let @/ = ""<return><esc>
+noremap <esc>^[ <esc>^[
+"noremap 5 :set nohlsearch!<CR>
+noremap <F6> :set paste!<CR>
+map <F2> :w<CR>
+map! <F2> <ESC><F2>
+map <F4> :q!<CR>
+map! <F4> <ESC><F4>
+noremap <ScrollWheelDown> 4<C-E>
+noremap <ScrollWheelUp> 4<C-Y>
+noremap q $
+noremap Q 0
+
+" quit if nerdtree only left
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+" change arrow
+let g:NERDTreeDirArrowExpandable = '>'
+let g:NERDTreeDirArrowCollapsible = 'v'
+" file type setting
+function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
+    exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
+    exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
+endfunction
+
+ call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
+call NERDTreeHighlightFile('ini', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('md', 'blue', 'none', '#3366FF', '#151515')
+call NERDTreeHighlightFile('yml', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('config', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('conf', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('json', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('html', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('styl', 'cyan', 'none', 'cyan', '#151515')
+call NERDTreeHighlightFile('css', 'cyan', 'none', 'cyan', '#151515')
+call NERDTreeHighlightFile('coffee', 'Red', 'none', 'red', '#151515')
+call NERDTreeHighlightFile('js', 'Red', 'none', '#ffa500', '#151515')
+call NERDTreeHighlightFile('php', 'Magenta', 'none', '#ff00ff', '#151515')
+
+" Shared yank buffer
+set clipboard=unnamed
+
+let g:session_yank_file="~/.vim_yank"
+map <silent> <Leader>y :call Session_yank()<CR>
+vmap <silent> <Leader>y y:call Session_yank()<CR>
+vmap <silent> <Leader>Y Y:call Session_yank()<CR>
+nmap <silent> <Leader>p :call Session_paste("p")<CR>
+nmap <silent> <Leader>P :call Session_paste("P")<CR>
+
+function Session_yank()
+	new
+	call setline(1,getregtype())
+	put
+	silent exec 'wq! ' . g:session_yank_file
+	exec 'bdelete ' . g:session_yank_file
+endfunction
+
+function Session_paste(command)
+	silent exec 'sview ' . g:session_yank_file
+	let l:opt=getline(1)
+	silent 2,$yank
+  if (l:opt == 'v')
+    call setreg('"', strpart(@",0,strlen(@")-1), l:opt)
+  else
+    call setreg('"', @", l:opt)
+  endif
+  exec 'bdelete ' . g:session_yank_file
+  exec 'normal ' . a:command
+endfunction
+
+" allow backspacing over everything in insert mode
+" set backspace=2
+set backspace=indent,eol,start
+
+" backups and other junky files
+set backupdir=~/.vim/backup     " get backups outta here
+set directory=~/.vim/swap       " get swapfiles outta here
+set writebackup                 " temp backup during write
+set undodir=~/.vim/undo         " persistent undo storage
+set undofile                    " persistent undo on
+
+" whitespace
+set ts=4 "tab width
+set autoindent                  " keep indenting on <CR>
+"set shiftwidth=4                " one tab = four spaces (autoindent)
+"set softtabstop=4               " one tab = four spaces (tab key)
+
+
+" themes
+set syntax=qsh
+set term=xterm-256color
+" set termguicolors
+set t_Co=256
+set t_ut=
+let g:neodark#use_256color = 1
+let g:neodark#terminal_transparent = 1
+colo neodark
+hi Search cterm=NONE ctermbg=lightgrey ctermfg=black
+"colo badwolf
+"colo VisualStudioDark
+"colo base16-default-dark
+"colo dracula
+set nowrap
+set mouse=a
+set nobackup
+set novisualbell
+set hlsearch
+set so=6 "minimum number to show on screen when scrolling
+set colorcolumn=81
+
+"ctrlshift move, shift move, ..
+nmap <ESC>[1;6A ddkP
+nmap <ESC>[1;6B ddp
+imap <ESC>[1;6A <ESC>ddkPA
+imap <ESC>[1;6B <ESC>ddpA
+nmap <ESC>[1;6C vw
+nmap <ESC>[1;6D vb
+imap <ESC>[1;6C <ESC>vw
+imap <ESC>[1;6D <ESC>vb
+vmap <ESC>[1;6A k
+vmap <ESC>[1;6B j
+vmap <ESC>[1;6C w
+vmap <ESC>[1;6D b
+"shift + movement = select (visual mode)
+nmap <ESC>[1;2D vh
+nmap <ESC>[1;2C vl
+nmap <ESC>[1;2A vk
+nmap <ESC>[1;2B vj
+imap <ESC>[1;2D <ESC>vh
+imap <ESC>[1;2C <ESC>vl
+imap <ESC>[1;2A <ESC>vk
+imap <ESC>[1;2B <ESC>vj
+vmap <ESC>[1;2D h
+vmap <ESC>[1;2C l
+vmap <ESC>[1;2A k
+vmap <ESC>[1;2B j
+"visual mode released when modifier released 
+vmap <up> <ESC>ki
+vmap <down> <ESC>ji
+vmap <left> <ESC>hi
+vmap <right> <ESC>li
+
+"map ctrl move up down right left
+vmap <ESC>[1;5A <ESC>k
+vmap <ESC>[1;5B <ESC>j
+vmap <ESC>[1;5C <ESC>w
+vmap <ESC>[1;5D <ESC>b
+nmap <ESC>[1;5A k
+nmap <ESC>[1;5B j
+nmap <ESC>[1;5C w
+nmap <ESC>[1;5D b
+imap <ESC>[1;5A <ESC>ki
+imap <ESC>[1;5B <ESC>ji
+imap <ESC>[1;5C <ESC>wi
+imap <ESC>[1;5D <ESC>bi
+nmap <del> i<del>
+nmap <bs> i<bs>
+vmap <bs> xi
+nmap <CR> i<CR>
+
+"shift home: visual mod
+vmap <ESC>[1;2H 0
+nmap <ESC>[1;2H v0
+imap <ESC>[1;2H <ESC>v0
+vmap <ESC>[1;2F $
+nmap <ESC>[1;2F v$
+imap <ESC>[1;2F <ESC>v$
+
+
+"remember last location
+autocmd BufReadPost *
+     \ if line("'\"") > 1 && line("'\"") <= line("$") |
+     \ exe "normal! g`\"" |
+     \ endif 

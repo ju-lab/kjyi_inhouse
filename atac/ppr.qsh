@@ -1,0 +1,9 @@
+#!/bin/bash
+#~/src/bam/ppr.qsh
+##PBS -e /dev/null
+##PBS -o /dev/null
+#PBS -j oe
+cd $PBS_O_WORKDIR
+
+LOG=$log/$sample.06.spr.log
+input=

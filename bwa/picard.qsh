@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+set -e
+PICARD=/home/users/kjyi/tools/picard/2.15.0/picard.jar
+SAMTOOLS=/home/users/kjyi/tools/samtools/samtools-1.5/bin/samtools
+java -Xmx$MEMORY -jar $PICARD MarkDuplicates \
+	REMOVE_DUPLICATES=true \
+	REMOVE_SEQUENCING_DUPLICATES=true \
+	VALIDATION_STRINGENCY=LENIENT \
+	METRICS_FILE=$OUTDIR/tmp_$SAMPLE/mark_dup_output_metrics.txt \
+	INPUT=$OUTDIR/tmp_$SAMPLE/tmp.sort.bam \
+	OUTPUT=$OUTDIR/tmp_$SAMPLE/tmp.marked.bam &> $LOG/$SAMPLE.02.picard.log
+$SAMTOOLS index $OUTDIR/tmp_$SAMPLE/tmp.marked.bam 2>> $LOG/$SAMPLE.02.picard.log

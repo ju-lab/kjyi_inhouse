@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -e /dev/null
+#PBS -o /dev/null
+set -e
+cd $PBS_O_WORKDIR
+BWA=/home/users/tools/bwa/bwa
+SAMTOOLS=/home/users/kjyi/tools/samtools/samtools-1.5/bin/samtools
+PLATFORM="ILLUMINA"
+mkdir -p "$OUTDIR/tmp_$SAMPLE"
+mkdir -p "$LOG"
+$BWA mem -t $THREAD \
+	-R "@RG\tID:${SAMPLE}\tLB:${SAMPLE}\tSM:${SAMPLE}\tPL:${PLATFORM}" \
+	$REF $FASTQ1 $FASTQ2 2>$LOG/$SAMPLE.01.BWA.log |
+$SAMTOOLS view -Sb -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log |
+$SAMTOOLS sort -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log 1> $OUTDIR/tmp_$SAMPLE/tmp.sort.bam

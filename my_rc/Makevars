@@ -1,0 +1,9 @@
+CC=/home/users/kjyi/.lib/gcc-5.4.0/bin/gcc
+CXX=/home/users/kjyi/.lib/gcc-5.4.0/bin/g++
+PKG_LIBS = -L/home/users/kjyi/tools/gsl/2.4/lib
+PKG_LIBS += -L/home/users/kjyi/.lib/gcc-5.4.0/lib
+PKG_LIBS += -L/home/users/kjyi/.lib/gcc-5.4.0/lib64
+PKG_LIBS += -L/home/users/kjyi/.lib/curl-7.54.1/lib
+PKG_CPPFLAGS = -I/home/users/kjyi/tools/gsl/2.4/include
+PKG_CPPFLAGS += -I/home/users/kjyi/.lib/gcc-5.4.0/include
+PKG_CPPFLAGS += -I/home/users/kjyi/.lib/curl-7.54.1/include
