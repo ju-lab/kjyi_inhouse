@@ -1,38 +1,14 @@
 #!/bin/bash
 i="${1:-/dev/stdin}" 
 
-for arg in $@;do
-	case $arg in
-		-l|--long)
-	  		sed -r '/^##/ s/\t/%t%/g;
-			:x; s/(^|\t)\t/\1NA\t/; tx
-			/^##/! {
-				s/^/]\t/
-				s/$/\t~/
-			}
-			0,/^]/ {
-				/^##/! s/$/\t/
-				:a
-				/[^]]\t/{
-		      		x;:b;s/9(_*)$/_\1/;tb;s/^(_*)$/0\1/;s/$/:0123456789/;s/([^_])(_*):.*\1(.).*/\3\2/;s/_/0/g;x;G;
-		      		s/([^]\t]+)\t(.*)\n(.*)/\1[\3]\t\2/;
-		      		ta
-		    	}
-			}
-	  ' < $i |	column -t -s $'\t' | sed 's/^][ ]*//;s/%t%/\t/g'|less -S~N ;
-	  exit 0;;
-		-h|--help) echo "add -l|--long to read more than 100,000 lines";;
-		*)continue ;;
-  esac
-done
-
 sed -r '/^##/ s/\t/%t%/g;
 	:x; s/(^|\t)\t/\1NA\t/; tx
 	/^##/! {
 		s/^/]\t/
-		s/$/\t||end of column/
+		s/$/\t~/
 	}
 	0,/^]/ {
+		s/\t~$//
 		/^##/! s/$/\t/
 		:a
 		/[^]]\t/{
@@ -41,6 +17,7 @@ sed -r '/^##/ s/\t/%t%/g;
       		ta
     	}
 	}
+	
 	100001 {s/.*/Ommited after 100,000th line/;q}
   ' < $i |
 column -t -s $'\t' | sed 's/^][ ]*//;s/%t%/\t/g'|less -S~N 
