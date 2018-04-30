@@ -1,4 +1,5 @@
 #!/bin/bash
+#~kjyi/src/bwa/gatk.qsh
 #PBS -e /dev/null
 #PBS -o /dev/null
 set -e

@@ -130,6 +130,6 @@ else
 			hcall) script_files+=" $SCRIPT/hcall.qsh" ;;
 		esac
 	done
-	cat $script_files | sed '/^#PBS/d; /^#!\/bin/bash/d; /^cd $PBS_O_WORKDIR/d' >> $script_out
+	cat $script_files | sed '/^#PBS/d; /^#!\/bin\/bash/d; /^cd $PBS_O_WORKDIR/d' >> $script_out
 fi
 
