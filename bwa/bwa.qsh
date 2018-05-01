@@ -13,4 +13,9 @@ $BWA mem -t $THREAD \
 	-R "@RG\tID:${SAMPLE}\tLB:${SAMPLE}\tSM:${SAMPLE}\tPL:${PLATFORM}" \
 	$REF $FASTQ1 $FASTQ2 2>$LOG/$SAMPLE.01.BWA.log |
 $SAMTOOLS view -Sb -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log |
-$SAMTOOLS sort -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log 1> $OUTDIR/tmp_$SAMPLE/tmp.sort.bam
+$SAMTOOLS sort -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log 1> $OUTDIR/tmp_$SAMPLE/tmp.sort.bam &&
+mv $LOG/$SAMPLE.01.BWA.log $LOG/$SAMPLE.01.BWA.done
+if [ -f $LOG/$SAMPLE.01.BWA.log ]; then
+	mv $LOG/$SAMPLE.01.BWA.log $LOG/$SAMPLE.01.BWA.fail
+fi
+

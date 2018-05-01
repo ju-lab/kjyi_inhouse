@@ -7,47 +7,45 @@ cd $PBS_O_WORKDIR
 SAMTOOLS=/home/users/kjyi/tools/samtools/samtools-1.5/bin/samtools
 PICARD=/home/users/kjyi/tools/picard/2.15.0/picard.jar
 GATK=/home/users/kjyi/tools/GATK/3.8.0/GenomeAnalysisTK.jar
-if [ -z "$INDEL" ]; then
-  java -Xmx$MEMORY -jar $GATK \
-  	-T BaseRecalibrator \
-  	-R $REF \
-  	-knownSites $DBSNP \
-  	-I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
-  	-o $OUTDIR/tmp_$SAMPLE/bqsr &> $LOG/$SAMPLE.03a.GATK_BSQR.log
-  java -Xmx$MEMORY -jar $GATK \
-  	-T PrintReads \
-  	-nct $THREAD \
-  	-R $REF \
-  	-BQSR $OUTDIR/tmp_$SAMPLE/bqsr \
-  	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
-  	-o $OUTDIR/$SAMPLE.bam &> $LOG/$SAMPLE.03b.GATK_printBSQR.log
-  rm -rf $OUTDIR/tmp_$SAMPLE
+log=$LOG/$SAMPLE.03.GATK.log
+
+rm -rf $log ${log/.log/.fail}
+if [ ! "x$INDEL" == "x" ]; then
+	echo "## GATK RealignerTargetCreator" >> $log &&
+	java -Xmx$MEMORY -jar $GATK \
+		-T RealignerTargetCreator \
+		-R $REF \
+		-I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
+		--known $INDEL \
+		-nt $THREAD --disable_auto_index_creation_and_locking_when_reading_rods \
+		-o $OUTDIR/tmp_$SAMPLE/tmp.intervals &>> $log &&
+	echo "## GATK IndelRealigner" >> $log &&
+	java -Xmx$MEMORY -jar $GATK \
+		-T IndelRealigner \
+		-targetIntervals $OUTDIR/tmp_$SAMPLE/tmp.intervals \
+		-R $REF -known $INDEL \
+		-I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
+		-o $OUTDIR/tmp_$SAMPLE/tmp.realign.bam &>> $log
 else
-  java -Xmx$MEMORY -jar $GATK \
-    -T RealignerTargetCreator \
-    -R $REF \
-    -I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
-    --known $INDEL \
-    -nt $THREAD --disable_auto_index_creation_and_locking_when_reading_rods \
-    -o $OUTDIR/tmp_$SAMPLE/tmp.intervals &> $LOG/$SAMPLE.03a.GATK_realignTargetCreate.log
-  java -Xmx$MEMORY -jar $GATK \
-  	-T IndelRealigner \
-  	-targetIntervals $OUTDIR/tmp_$SAMPLE/tmp.intervals \
-  	-R $REF -known $INDEL \
-  	-I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
-  	-o $OUTDIR/tmp_$SAMPLE/tmp.realign.bam &> $LOG/$SAMPLE.03b.GATK_realign.log
-  java -Xmx$MEMORY -jar $GATK \
-  	-T BaseRecalibrator \
-  	-R $REF \
-  	-knownSites $DBSNP \
-  	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
-  	-o $OUTDIR/tmp_$SAMPLE/bqsr &> $LOG/$SAMPLE.03c.GATK_BQSR.log
-  java -Xmx$MEMORY -jar $GATK \
-  	-T PrintReads \
-  	-nct $THREAD \
-  	-R $REF \
-  	-BQSR $OUTDIR/tmp_$SAMPLE/bqsr \
-  	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
-  	-o $OUTDIR/$SAMPLE.bam &> $LOG/$SAMPLE.03d.GATK_printBSQR.log
-  rm -rf $OUTDIR/tmp_$SAMPLE
+	mv $OUTDIR/tmp_$SAMPLE/tmp.markd.bam $OUTDIR/tmp_$SAMPLE/tmp.realign.bam
+fi &&
+echo "## GATK BaseRecalibrator" >> $log &&
+java -Xmx$MEMORY -jar $GATK \
+	-T BaseRecalibrator \
+	-R $REF \
+	-knownSites $DBSNP \
+	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
+	-o $OUTDIR/tmp_$SAMPLE/bqsr &>> $log &&
+echo "## GATK PrintReads" >> $log &&
+java -Xmx$MEMORY -jar $GATK \
+	-T PrintReads \
+	-nct $THREAD \
+	-R $REF \
+	-BQSR $OUTDIR/tmp_$SAMPLE/bqsr \
+	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
+	-o $OUTDIR/$SAMPLE.bam &>> $log &&
+rm -rf $OUTDIR/tmp_$SAMPLE &&
+mv $log ${log/.log/.done}
+if [ -f $log ]; then
+	mv $log ${log/.log/.fail}
 fi

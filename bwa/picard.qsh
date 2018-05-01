@@ -12,5 +12,10 @@ java -Xmx$MEMORY -jar $PICARD MarkDuplicates \
 	VALIDATION_STRINGENCY=LENIENT \
 	METRICS_FILE=$OUTDIR/tmp_$SAMPLE/mark_dup_output_metrics.txt \
 	INPUT=$OUTDIR/tmp_$SAMPLE/tmp.sort.bam \
-	OUTPUT=$OUTDIR/tmp_$SAMPLE/tmp.marked.bam &> $LOG/$SAMPLE.02.picard.log
-$SAMTOOLS index $OUTDIR/tmp_$SAMPLE/tmp.marked.bam 2>> $LOG/$SAMPLE.02.picard.log
+	OUTPUT=$OUTDIR/tmp_$SAMPLE/tmp.marked.bam &> $LOG/$SAMPLE.02.picard.log &&
+$SAMTOOLS index $OUTDIR/tmp_$SAMPLE/tmp.marked.bam 2>> $LOG/$SAMPLE.02.picard.log &&
+mv $LOG/$SAMPLE.02.picard.log $LOG/$SAMPLE.02.picard.done
+if [ -f $LOG/$SAMPLE.02.picard.log ]; then
+	mv $LOG/$SAMPLE.02.picard.log $LOG/$SAMPLE.02.picard.fail
+fi
+
