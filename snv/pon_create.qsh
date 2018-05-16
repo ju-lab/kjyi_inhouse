@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+java=~kjyi/bin/java
+LOG=$log/$pon_name.log
+pon=$outdir/$pon_name.vcf.gz
+
+$java -Xmx16g -jar gatk4.jar CreateSomaticPanelOfNormals \
+	`ls $outdir/*.vcf.gz | grep -v "$pon_name.vcf.gz" | \
+	 sed 's/^/-vcfs /'| tr '\n' ' '` \
+	-O $outdir/$pon_name.vcf.gz &>> $LOG &&
+	echo "# done" >> $LOG &&
+	mv $LOG ${LOG/.log/.done}
+if [ -f $LOG ]; then
+	mv $LOG ${LOG/.log/.fail}
+	exit 1
+fi

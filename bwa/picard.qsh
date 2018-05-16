@@ -6,16 +6,16 @@ cd $PBS_O_WORKDIR
 set -e
 PICARD=/home/users/kjyi/tools/picard/2.15.0/picard.jar
 SAMTOOLS=/home/users/kjyi/tools/samtools/samtools-1.5/bin/samtools
-java -Xmx$MEMORY -jar $PICARD MarkDuplicates \
+java -Xmx16G -XX:ParallelGCThreads=6 -jar $PICARD MarkDuplicates \
 	REMOVE_DUPLICATES=true \
 	REMOVE_SEQUENCING_DUPLICATES=true \
 	VALIDATION_STRINGENCY=LENIENT \
-	METRICS_FILE=$OUTDIR/tmp_$SAMPLE/mark_dup_output_metrics.txt \
+	METRICS_FILE=$OUTDIR/tmp_$SAMPLE/mark_dup_metrics.txt \
 	INPUT=$OUTDIR/tmp_$SAMPLE/tmp.sort.bam \
 	OUTPUT=$OUTDIR/tmp_$SAMPLE/tmp.marked.bam &> $LOG/$SAMPLE.02.picard.log &&
 $SAMTOOLS index $OUTDIR/tmp_$SAMPLE/tmp.marked.bam 2>> $LOG/$SAMPLE.02.picard.log &&
 mv $LOG/$SAMPLE.02.picard.log $LOG/$SAMPLE.02.picard.done
 if [ -f $LOG/$SAMPLE.02.picard.log ]; then
-	mv $LOG/$SAMPLE.02.picard.log $LOG/$SAMPLE.02.picard.fail
+	mv $LOG/$SAMPLE.02.picard.log $LOG/$SAMPLE.02.picard.fail; exit 1
 fi
 

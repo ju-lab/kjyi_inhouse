@@ -2,20 +2,32 @@
 #~kjyi/src/bwa/bwa.qsh
 #PBS -e /dev/null
 #PBS -o /dev/null
-set -e
 cd $PBS_O_WORKDIR
-BWA=/home/users/tools/bwa/bwa
-SAMTOOLS=/home/users/kjyi/tools/samtools/samtools-1.5/bin/samtools
+BWA=~kjyi/tools/bwa/bwa
+SAMTOOLS=~kjyi/tools/samtools/samtools-1.5/bin/samtools
 PLATFORM="ILLUMINA"
-mkdir -p "$OUTDIR/tmp_$SAMPLE"
-mkdir -p "$LOG"
-$BWA mem -t $THREAD \
-	-R "@RG\tID:${SAMPLE}\tLB:${SAMPLE}\tSM:${SAMPLE}\tPL:${PLATFORM}" \
-	$REF $FASTQ1 $FASTQ2 2>$LOG/$SAMPLE.01.BWA.log |
-$SAMTOOLS view -Sb -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log |
-$SAMTOOLS sort -@ $THREAD 2>>$LOG/$SAMPLE.01.BWA.log 1> $OUTDIR/tmp_$SAMPLE/tmp.sort.bam &&
-mv $LOG/$SAMPLE.01.BWA.log $LOG/$SAMPLE.01.BWA.done
-if [ -f $LOG/$SAMPLE.01.BWA.log ]; then
-	mv $LOG/$SAMPLE.01.BWA.log $LOG/$SAMPLE.01.BWA.fail
-fi
+K8=~kjyi/tools/k8/k8-0.2.5/k8-Linux
+postaltjs=~kjyi/tools/bwa/bwa.kit/bwa-postalt.js
+ref_alt=$REF.64.alt
+log=$LOG/$SAMPLE.01.BWA.log
+aligned=$OUTDIR/tmp_$SAMPLE/tmp.sort.pre_postalt.bam
+bam_postalt=$OUTDIR/tmp_$SAMPLE/tmp.sort.bam
+seqtk=~kjyi/tools/bwa/bwa.kit/seqtk
+mkdir -p $OUTDIR/tmp_$SAMPLE
+mkdir -p $LOG
+echo '# bwa_mem/compress2bam/sort' >> $log
+$seqtk mergepe $FASTQ1 $FASTQ2 | \
+	$BWA mem -t $THREAD \
+		-K 100000000 -p -v 2 \
+		-R "@RG\tID:${SAMPLE}\tLB:${SAMPLE}\tSM:${SAMPLE}\tPL:${PLATFORM}" \
+		$REF - 2> $log | \
+	$SAMTOOLS view -1 - | \
+	$SAMTOOLS sort 1> $aligned &&
+if [ "x$postalt" == "xtrue" ]; then
+	echo '# postalt' >> $log &&
+	$K8 $postaltjs $ref_alt $aligned > $bam_postalt 2>> $log
+else
+	mv $aligned $bam_postalt 2>> $log
+fi &&
+mv $log ${log/.log/.done}; if [ -f $log ]; then	mv $log ${log/.log/.fail}; exit 1; fi
 

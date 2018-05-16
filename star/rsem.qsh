@@ -28,4 +28,5 @@ $python3 ~kjyi/src/star/RSEM.py \
 mv $log/$sample.02.rsem.log $log/$sample.02.rsem.done
 if [ -f $log/$sample.02.rsem.log ]; then
 	mv $log/$sample.02.rsem.log $log/$sample.02.rsem.fail 
+	exit 1
 fi

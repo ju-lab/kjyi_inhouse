@@ -12,15 +12,15 @@ log=$LOG/$SAMPLE.03.GATK.log
 rm -rf $log ${log/.log/.fail}
 if [ ! "x$INDEL" == "x" ]; then
 	echo "## GATK RealignerTargetCreator" >> $log &&
-	java -Xmx$MEMORY -jar $GATK \
+	java -Xmx16g -jar $GATK \
 		-T RealignerTargetCreator \
 		-R $REF \
 		-I $OUTDIR/tmp_$SAMPLE/tmp.marked.bam \
 		--known $INDEL \
-		-nt $THREAD --disable_auto_index_creation_and_locking_when_reading_rods \
+		-nt 6 --disable_auto_index_creation_and_locking_when_reading_rods \
 		-o $OUTDIR/tmp_$SAMPLE/tmp.intervals &>> $log &&
 	echo "## GATK IndelRealigner" >> $log &&
-	java -Xmx$MEMORY -jar $GATK \
+	java -Xmx16g -jar $GATK \
 		-T IndelRealigner \
 		-targetIntervals $OUTDIR/tmp_$SAMPLE/tmp.intervals \
 		-R $REF -known $INDEL \
@@ -30,16 +30,15 @@ else
 	mv $OUTDIR/tmp_$SAMPLE/tmp.markd.bam $OUTDIR/tmp_$SAMPLE/tmp.realign.bam
 fi &&
 echo "## GATK BaseRecalibrator" >> $log &&
-java -Xmx$MEMORY -jar $GATK \
+java -Xmx16g -jar $GATK -nct 6 \
 	-T BaseRecalibrator \
 	-R $REF \
 	-knownSites $DBSNP \
 	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
 	-o $OUTDIR/tmp_$SAMPLE/bqsr &>> $log &&
 echo "## GATK PrintReads" >> $log &&
-java -Xmx$MEMORY -jar $GATK \
+java -Xmx16g -jar $GATK -nct 6 \
 	-T PrintReads \
-	-nct $THREAD \
 	-R $REF \
 	-BQSR $OUTDIR/tmp_$SAMPLE/bqsr \
 	-I $OUTDIR/tmp_$SAMPLE/tmp.realign.bam \
@@ -48,4 +47,5 @@ rm -rf $OUTDIR/tmp_$SAMPLE &&
 mv $log ${log/.log/.done}
 if [ -f $log ]; then
 	mv $log ${log/.log/.fail}
+	exit 1
 fi

@@ -73,4 +73,5 @@ fi &&
 mv $log/$sample.01.star.log $log/$sample.01.star.done 
 if [ -f $log/$sample.01.star.log ];then
 	mv $log/$sample.01.star.log $log/$sample.01.star.fail
+	exit 1
 fi

@@ -64,7 +64,6 @@ $VERBOSE && echo "$IN" | sed '/^#/d;s/$/\t""/;s/[^\t]*\t\([^\t]*\)\t*\([^\t]*\).
 				BOOL=false
 				for j in "${!VARS[@]}"; do
 					$VERBOSE && echo ~~~~VARS[$j] ${ARGS[i]} ${VARS[j]} search ${FLAGS[@]}
-	#				if [ "${FLAGS[j]}" == "${ARGS[i]}" ];then
 					test='@('${FLAGS[j]}')'
 				    case ${ARGS[i]} in
 						$test)
@@ -75,11 +74,11 @@ $VERBOSE && echo "$IN" | sed '/^#/d;s/$/\t""/;s/[^\t]*\t\([^\t]*\)\t*\([^\t]*\).
 								eval "${VARS[j]}=\"true\""
 								BOOL=true
 							else
-								eval "${VARS[j]}=\"${ARGS[i+1]}\""
+								eval "${VARS[j]}=${ARGS[i+1]}"
+								#eval "${VARS[j]}=\"${ARGS[i+1]}\""
 							fi
 							;;
 					esac
-#					fi
 				done
 				if ! $BOOL; then unset 'ARGS[i+1]'; fi ;;
 		    --) unset 'ARGS[i]'; break;;

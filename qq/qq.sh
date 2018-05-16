@@ -4,7 +4,7 @@ prevent=true
 PARSE $@ 1 << EOF
 #Display cpu usage of Julab's cluster
 -u|--user		WHO			$USER
--i|--interval	interval	20
+-i|--interval	interval	0
 EOF
 
 mkdir -p ~/.cpu
@@ -43,7 +43,7 @@ for i in {0..8}; do
     S=$BACKGROUND; N=$(($L-$T)); PRINT;
     if [ "$i" == "0" ]; then
 		echo -en "\t\t\t\t"
-		qstat -u $WHO | awk 'BEGIN { R = 0; H = 0; Q = 0 } $10 == "R" { R += 1  } $10 == "H" { H += 1 } $10 == "Q" { Q += 1 } END { print R " R " H " H " Q " Q" }'
+		qstat -u $WHO | awk 'BEGIN { R = 0; H = 0; Q = 0 } $10 == "R" { R += 1  } $10 == "H" { H += 1 } $10 == "Q" { Q += 1 } END { print R "R " H "H " Q "Q" }'
     elif [ -f ~/.cpu/j$i ]; then 
 		nj=$(wc -l ~/.cpu/j$i | cut -f1 -d ' ')
 		if [ $nj -gt 1 ]; then njt="+"$(($nj - 1)); fi
@@ -54,5 +54,6 @@ for i in {0..8}; do
 #	if [ "$i" == 8 ]; then tput cuu 9; fi
 done
 Init=false
-sleep $interval
+if [ "$interval" == "0" ]; then exit 0; fi
+sleep $((interval - 1))
 done

@@ -1,0 +1,51 @@
+#!/bin/bash
+#PBS -e /dev/null
+#PBS -o /dev/null
+cd $PBS_O_WORKDIR
+java=~kjyi/bin/java
+sample=`$java -jar gatk4.jar GetSampleName -I $input_normal -O /dev/stdout 2>/dev/null`
+LOG=$log/$sample.pon_individual.log
+seed=`shuf -i 100000000-999999999 -n 1`
+interval_split=$outdir/$sample.interval.$seed
+mkdir -p $log
+mkdir -p $interval_split
+echo "# split interval files" > $LOG
+$java -Xmx3g -jar gatk4.jar SplitIntervals \
+	-R $ref \
+	-L $interval \
+	-scatter $scatter_count \
+	-O $interval_split 2>$LOG || exit 1
+echo "# parallel run Mutect2" >> $LOG
+for i in $interval_split/*; do
+	(
+	ii=`basename $i | sed 's/-scattered.intervals//'`
+	$java -Xmx16g -jar gatk4.jar Mutect2 \
+		-I $input_normal \
+		-tumor ${sample} \
+		-O $outdir/$sample.$ii.tmp.vcf.gz \
+		-R $ref \
+		--disable-read-filter MateOnSameContigOrNoMappedMateReadFilter \
+		-L $i 2> $LOG.$ii.tmp &&
+		mv $LOG.$ii.tmp $LOG.$ii.tmp.done &&
+		echo "- $ii done" >> $LOG
+	if [ -f $LOG.$ii.tmp ]; then mv $LOG.$ii.tmp $LOG.$ii.tmp.fail; fi
+	) &
+done
+wait
+
+if ls $LOG.*.fail &> /dev/null; then 
+	echo "# Somthing Error" >> $LOG
+	exit 1;
+fi
+
+echo "# parallel calling all done with all exit status zero" >> $LOG
+(for i in $LOG.*.tmp*; do echo "## $i"; cat $i; done) >> $LOG && rm $LOG.*.tmp*
+$java -Xmx5g -jar gatk4.jar MergeVcfs \
+	`ls $outdir/$sample.*.tmp.vcf.gz | sed 's/./-I &/' | tr '\n' ' '` \
+	-O $outdir/$sample.vcf.gz &>> $LOG &&
+	echo "# merging vcf done" >> $LOG &&
+	mv $LOG ${LOG/.log/.done} && rm -rf $outdir/$sample.*.tmp.vcf.gz* $interval_split
+if [ -f $LOG ]; then
+	mv $LOG ${LOG/.log/.fail}
+	exit 1
+fi
