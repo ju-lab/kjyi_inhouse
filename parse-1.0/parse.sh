@@ -47,7 +47,7 @@ PARSE() {
 eval `echo "$IN" | sed '/^#/d;s/$/\t""/;s/[^\t]*\t\([^\t]*\)\t*\([^\t]*\).*/\1="\2"/;s/""\(.*\)""/"\1"/g;s/"'\''\(.*\)'\''"/"\1"/g;/^=$/d'`
 $VERBOSE && echo "$IN" | sed '/^#/d;s/$/\t""/;s/[^\t]*\t\([^\t]*\)\t*\([^\t]*\).*/\1="\2"/;s/""\(.*\)""/"\1"/g;s/"'\''\(.*\)'\''"/"\1"/g;/^=$/d'
     USAGE1=`echo "$IN" | sed '/^[^#]/,$ d; s/^# //;s/^#//'`
-    USAGE2=`echo "$IN" | sed -n '/^[^#]/,$ p'| sed '/^#/ {:x s/\t\t/\t/g;tx;s/\t//};/^#/! s/\t[^\t]*//; s/^-@P/ /;s/^#//'|column -t -s $'\t'`
+    USAGE2=`echo "$IN" | sed -n '/^[^#]/,$ p'| sed '/^#/ {:x s/\t\t/\t/g; tx;}; /^#/! s/\t[^\t]*//; s/^-@P/ /;s/^#//'|column -t -s $'\t'`
     if [ $# == 0 ]; then echo "$USAGE1"; echo "$USAGE2"; echo "no argument submitted"; exit 1; fi
     MATRIX=`echo "$IN"|sed '/^#/d;/^$/d;/^\s*$/d;'`
     FLAGS=( `echo "$MATRIX" | cut -d ' ' -f1| cut -f1` )
