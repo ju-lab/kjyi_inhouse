@@ -26,14 +26,16 @@ EOF
     exit 0
 fi
 
-
-
-if [[ "$1" = "sync" ]] | [[ "$1" = "s" ]]; then
+if [[ "$1" = "sync" ]] || [[ "$1" = "s" ]]; then
 	if `git rev-parse --is-inside-work-tree &> /dev/null`; then
 		status=`git status --short`
 		if [ ! "x" == "x$status" ]; then
 			echo "$status"
-	    	read -p ":" cm
+			if [[ "$1" == "sync" ]]; then 
+				read -p ":" cm
+			else
+				cm=""
+			fi
 			log=~/.git.last.log
 			echo "git add -A" > $log
 			$GIT add -A &>> $log &&
