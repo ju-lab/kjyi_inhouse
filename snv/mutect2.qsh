@@ -26,6 +26,7 @@ for i in $interval_split/*; do
 		-I $input_normal \
 		-tumor $tumor_name \
 		-normal $normal_name \
+		--genotype-germline-sites \
 		`echo $pon | sed 's/./-pon &/'` \
 		`echo $gnomad | sed 's/./--germline-resource &/'` \
 		`echo $drf | sed 's/./--disable-read-filter &/'` \

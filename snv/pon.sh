@@ -29,7 +29,7 @@ for i in ${REMAIN[@]};do
 		qsub -N pon_$sample \
 			-q week \
 			-v ${arguments},input_normal \
-			-l nodes=1:ppn=$((scatter_count*3)),mem=$((scatter_count * 16))gb \
+			-l nodes=1:ppn=$((scatter_count*2)),mem=$((scatter_count * 12))gb \
 			~kjyi/src/snv/pon_individual.qsh
 		)
 done

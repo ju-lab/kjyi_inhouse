@@ -27,7 +27,7 @@ esac
 qsub -N mt2_$(basename $input_tumor) \
 	-q week \
 	-v $arguments \
-	-l nodes=1:ppn=$((scatter_count * 3)),mem=$((scatter_count * 16))gb \
+	-l nodes=1:ppn=$((scatter_count * 2)),mem=$((scatter_count * 16))gb \
 	~kjyi/src/snv/mutect2.qsh
 
 

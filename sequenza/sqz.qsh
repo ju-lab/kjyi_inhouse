@@ -1,14 +1,18 @@
 #!/bin/bash
+#PBS -j oe
 cd $PBS_O_WORKDIR
 sqzutil=/home/users/tools/sequenza/sequenza/exec/sequenza-utils.py
 Rscript=/home/users/kjyi/tools/R/R-3.4.0/bin/Rscript
 sqzR=/home/users/sypark/01_Python_files/Rscript/04_Run_sequenza.R
 log=$LOG.sqz.log
 mkdir -p $sqzdir
-$sqzutil pileup2seqz -gc \
-	$gc -n $normal_mpileup $t $tumor_mpileup > $sqzdir/$tumor_name.tmp.seqz 2> $log&&
+echo "# sequenza pileup2seqz start" > $log
+$sqzutil pileup2seqz -gc $gc \
+	-n $normal_mpileup -t $tumor_mpileup > $sqzdir/$tumor_name.tmp.seqz 2>> $log &&
+echo "# sequenza seqz-binning" >> $log &&
 $sqzutil seqz-binning -w 100 -s $sqzdir/$tumor_name.tmp.seqz 2>> $log | \
 	grep -v MT | grep -V GL | gzip > $sqzdir/$tumor_name.seqz.gz &&
+echo "# sequenza Rscript" >> $log &&
 $Rscript $sqzR $sqzdir/$tumor_name.seqz.gz $sqzdir/$tumor_name &>> $log &&
 mv $log ${log/.log/.done}
 if [ -f $log ]; then mv $log ${log/.log/.fail}; exit 1 ; fi
