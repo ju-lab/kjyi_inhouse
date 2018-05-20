@@ -6,10 +6,19 @@ if [ $# == 0 ]; then
 	ommit after 100001
 EOF
 fi
+# extract if gz (less) \
+# sed change ## lines tab to %t%
+# non## lines - no tab lines, comma to tab
+# change consequtive tabs to tab-na-tab
+# add ]\t to all start
+# add all \t~ to end of lines
+# from zero to ] starting lines
+# remove trailing tab
 less -f "${1:-/dev/stdin}" | \
 sed -r '/^##/ s/\t/%t%/g;
-	:x; s/(^|\t)\t/\1NA\t/; tx
 	/^##/! {
+		/\t/!{s/,/\t/g}
+		:x; s/(^|\t)\t/\1NA\t/; tx
 		s/^/]\t/
 		s/$/\t~/
 	}
