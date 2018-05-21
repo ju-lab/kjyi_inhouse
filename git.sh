@@ -12,8 +12,8 @@ fi
 
 if [[ "$1" = "ignore" ]]; then
     cat << EOF > .gitignore
-.*
 */
+.gitignore
 *.Rproj
 *tmp*
 *temp*
