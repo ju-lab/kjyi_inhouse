@@ -46,12 +46,14 @@ for i in ${REMAIN[@]}; do
 		sed 's/^.*SN://g' | \
 		cut -f 1 | \
 		xargs -I {} -n 1 -P $thread sh \
-		-c "$samtools mpileup -BQ20 -q 20 -d 100000 -f $reference -r {} $i 1> tmp.$prefix.{}.vcf 2> $stderr"
+		-c "$samtools mpileup -BQ20 -q 20 -d 100000 -f $reference -r {} $i 1> $outdir/tmp.$prefix.{}.vcf 2> $stderr"
 	$samtools view -H $i | \
 		grep "\@SQ" | \
 		sed 's/^.*SN://g' | \
 		cut -f 1 | \
-		perl -ane 'system("cat tmp.'$prefix'.$F[0].vcf >> '$output'");'
-	rm tmp.$prefix.*.vcf
-	if $compress; then gzip $output; fi
+		perl -ane 'system("cat '$outdir'/tmp.'$prefix'.$F[0].vcf >> '$output'");'
+	rm $outdir/tmp.$prefix.*.vcf
+	if $compress; then gzip $output ; fi
 done
+wait
+

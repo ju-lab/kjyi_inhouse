@@ -1,10 +1,9 @@
 #!/bin/bash
 . ~kjyi/src/parse
-prevent=true
 PARSE $@ 1 << EOF
 #Display cpu usage of Julab's cluster
 -u|--user		WHO			$USER
--i|--interval	interval	0
+-i|--interval	interval	3
 EOF
 
 mkdir -p ~/.cpu
@@ -14,7 +13,7 @@ PRINT()
 }
 # call top
 Init=true
-while :; do
+while ! read -t0; do
 ssh node0 -x -p 2030 top -b -n 1 > ~/.cpu/0 &
 for i in 1 2 3 4 5 6 7 8; do
     ssh node$i -x top -b n 1 > ~/.cpu/$i &
@@ -54,6 +53,6 @@ for i in {0..8}; do
 #	if [ "$i" == 8 ]; then tput cuu 9; fi
 done
 Init=false
-if [ "$interval" == "0" ]; then exit 0; fi
+#if [ "$interval" == "0" ]; then exit 0; fi
 sleep $((interval - 1))
 done

@@ -30,6 +30,7 @@ for i in $interval_split/*; do
 		`echo $pon | sed 's/./-pon &/'` \
 		`echo $gnomad | sed 's/./--germline-resource &/'` \
 		`echo $drf | sed 's/./--disable-read-filter &/'` \
+		`echo $aoanir | sed 's/./--af-of-alleles-not-in-resource &/'` \
 		-O $outdir/$tumor_name.$ii.tmp.vcf.gz \
 		-R $ref \
 		-L $i 2> $LOG.$ii.tmp &&

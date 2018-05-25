@@ -1,18 +1,19 @@
 #!/bin/bash
 . ~kjyi/src/parse
 PARSE $@ << EOF
--c	c	-1
--i	i	0
+# asdf
+-c	c	"-1"
+-i	I	0
 -d	dry	false
 EOF
-if dry; then
+if $dry; then
 	exit 0
 fi
 for args in ${REMAIN[@]}; do
 	target=`readlink -f $args`
 	path=`dirname $target`
 	orig=`md5sum $target | cut -f1 -d' '`
-	lfs setstripe -c $c -i $i $path
+	lfs setstripe -c $c -i $I $path
 	cp $target $target.migraTing
 	after=`md5sum $target.migraTing | cut -f1 -d' '`
 	if [ "x$orig" == "x$after" ]; then

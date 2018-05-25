@@ -11,7 +11,7 @@ current=c($current)
 cat("full=\"",paste0(paste0("_",which(current>=max(current)-1)-1,"_"), collapse="|"),"\";",sep="")
 x <- current < $cutoff
 r <- rle(x)
-i <- which(with(r, rep(lengths == max(lengths[values]) & values, lengths)))[1]
+i <- which(with(r, rep(lengths == max(lengths[values]) & values, lengths)))[1] - 1
 l <- max(r\$length[r\$value])
 cat ("recommand=\"-c ", l, " -i ", i, "\"\n")
 EOF

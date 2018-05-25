@@ -12,7 +12,7 @@ PARSE $@ << EOF
 -r|--reference_fa					ref			hg19
 -L|--interval						interval	
 -g|--germline_resource				gnomad		/home/users/kjyi/ref/hg19/gnomad/gnomad.exomes.AFonly.vcf.gz
---af-of-alleles-not-in-resource		aoanir		
+--af-of-alleles-not-in-resource		aoanir		0.00003125
 --disable-read-filter				drf			MateOnSameContigOrNoMappedMateReadFilter
 --scatter_count						scatter_count	6	6~8
 EOF
