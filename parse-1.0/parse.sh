@@ -49,56 +49,56 @@ $VERBOSE && echo "$IN" | sed '/^#/d;s/$/\t""/;s/[^\t]*\t\([^\t]*\)\t*\([^\t]*\).
     USAGE1=`echo "$IN" | sed '/^[^#]/,$ d; s/^# //;s/^#//'`
     USAGE2=`echo "$IN" | sed -n '/^[^#]/,$ p'| sed '/^#/ {:x s/\t\t/\t/g; tx;}; /^#/! s/\t[^\t]*//; s/^-@P/ /;s/^#//'|column -t -s $'\t'`
     if [ $# == 0 ]; then echo "$USAGE1"; echo "$USAGE2"; echo "no argument submitted"; exit 1; fi
-    MATRIX=`echo "$IN"|sed '/^#/d;/^$/d;/^\s*$/d;'`
-    FLAGS=( `echo "$MATRIX" | cut -d ' ' -f1| cut -f1` )
-    VARS=( `echo "$MATRIX" | cut -f2` )
-    POS=( `echo "$MATRIX" | grep "^-@P" | cut -f2` )
-    ARGS=( "$@" )
-	$VERBOSE &&	ARGS_bak=( "$@" )
-    for i in "${!ARGS[@]}"; do
-		$VERBOSE && echo "~ARGS[i] $i ${ARGS[i]}"
-		case "${ARGS[i]}" in
+    mAtRiX=`echo "$IN"|sed '/^#/d;/^$/d;/^\s*$/d;'`
+    FlAgS=( `echo "$mAtRiX" | cut -d ' ' -f1| cut -f1` )
+    VarS=( `echo "$mAtRiX" | cut -f2` )
+    POoOOS=( `echo "$mAtRiX" | grep "^-@P" | cut -f2` )
+    ArGss=( "$@" )
+	$VERBOSE &&	ArGss_bak=( "$@" )
+    for iIiI in "${!ArGss[@]}"; do
+		$VERBOSE && echo "~ArGss[i] $iIiI ${ArGss[iIiI]}"
+		case "${ArGss[iIiI]}" in
 		    '') continue ;;
-		    -h|--help) echo "$USAGE1"; echo "$USAGE2"; exit 1;;
+		    --help) echo "$USAGE1"; echo "$USAGE2"; exit 1;;
 		    -*) 
 				BOOL=false
-				for j in "${!VARS[@]}"; do
-					$VERBOSE && echo ~~~~VARS[$j] ${ARGS[i]} ${VARS[j]} search ${FLAGS[@]}
-					test='@('${FLAGS[j]}')'
-				    case ${ARGS[i]} in
+				for jJjJ in "${!VarS[@]}"; do
+					$VERBOSE && echo ~~~~VarS[$jJjJ] ${ArGss[iIiI]} ${VarS[jJjJ]} search ${FlAgS[@]}
+					test='@('${FlAgS[jJjJ]}')'
+				    case ${ArGss[iIiI]} in
 						$test)
-							$VERBOSE && echo "case ARGS[$i] ${ARGS[i]}, in FLAGS[$j] ${FLAGS[j]}"
-							$VERBOSE && echo challenge VARS[$j] ${VARS[j]}, '$(eval echo $`echo ${VARS[j]}`)' $(eval echo $`echo ${VARS[j]}`) == "false"?
-							if [ "x$(eval echo $`echo ${VARS[j]}`)" == "xfalse" ]; then
-								$VERBOSE && echo VARS[$j] ${VARS[j]}'x$(eval echo $`echo ${VARS[j]}`) == "xfalse", value turns true'
-								eval "${VARS[j]}=\"true\""
+							$VERBOSE && echo "case ArGss[$iIiI] ${ArGss[iIiI]}, in FlAgS[$jJjJ] ${FlAgS[jJjJ]}"
+							$VERBOSE && echo challenge VarS[$jJjJ] ${VarS[jJjJ]}, '$(eval echo $`echo ${VarS[jJjJ]}`)' $(eval echo $`echo ${VarS[jJjJ]}`) == "false"?
+							if [ "x$(eval echo $`echo ${VarS[jJjJ]}`)" == "xfalse" ]; then
+								$VERBOSE && echo VarS[$j] ${VarS[jJjJ]}'x$(eval echo $`echo ${VarS[j]}`) == "xfalse", value turns true'
+								eval "${VarS[jJjJ]}=\"true\""
 								BOOL=true
 							else
-								eval "${VARS[j]}=${ARGS[i+1]}"
-								#eval "${VARS[j]}=\"${ARGS[i+1]}\""
+								eval "${VarS[jJjJ]}=${ArGss[iIiI+1]}"
+								#eval "${VarS[j]}=\"${ArGss[i+1]}\""
 							fi
 							;;
 					esac
 				done
-				if ! $BOOL; then unset 'ARGS[i+1]'; fi ;;
-		    --) unset 'ARGS[i]'; break;;
+				if ! $BOOL; then unset 'ArGss[iIiI+1]'; fi ;;
+		    --) unset 'ArGss[iIiI]'; break;;
 		    *) continue;;
 		esac
-		unset 'ARGS[i]'
+		unset 'ArGss[iIiI]'
     done
-    REMAIN=( "${ARGS[@]}" )
-    for i in "${!POS[@]}"; do
-	eval "${POS[i]}=\"${REMAIN[i]}\""
+    REMAIN=( "${ArGss[@]}" )
+    for i in "${!POoOOS[@]}"; do
+	eval "${POoOOS[iIiI]}=\"${REMAIN[iIiI]}\""
     done
-    arguments=`echo ${VARS[@]} |sed 's/ /,/g'`
-    export `echo ${VARS[@]}`
+    arguments=`echo ${VarS[@]} |sed 's/ /,/g'`
+    export `echo ${VarS[@]}`
 if $VERBOSE ; then
-echo "MATRIX:"
-echo "$MATRIX"|sed 's/\t/\t\|/g'|column -t -s $'\t'
-echo "FLAGS: ${FLAGS[@]}"
-echo "VARS : ${VARS[@]}"
-echo "POS  : ${POS[@]}"
-echo "ARGS : ${ARGS_bak[@]}"
+echo "mAtRiX:"
+echo "$mAtRiX"|sed 's/\t/\t\|/g'|column -t -s $'\t'
+echo "FlAgS: ${FlAgS[@]}"
+echo "VarS : ${VarS[@]}"
+echo "POoOOS  : ${POoOOS[@]}"
+echo "ArGss : ${ArGss_bak[@]}"
 echo "REMAIN: ${REMAIN[@]}"
 fi
 }

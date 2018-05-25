@@ -7,15 +7,11 @@ call plug#end()
 
 
 " Shortkeys
-map <F1> :NERDTreeToggle<CR>
-"noremap 3  :set nonumber!<CR>
+map <F3> :NERDTreeToggle<CR>
 set number
-"nnoremap 4 :set nowrap!<CR>
 set wrap
-"noremap 5 :let @/ = ""<CR>
-noremap <esc> :let @/ = ""<return><esc>
+noremap <silent> <esc> :let @/ = ""<return><esc>
 noremap <esc>^[ <esc>^[
-"noremap 5 :set nohlsearch!<CR>
 noremap <F6> :set paste!<CR>
 map <F2> :w<CR>
 map! <F2> <ESC><F2>
@@ -24,20 +20,27 @@ map! <F4> <ESC><F4>
 noremap <ScrollWheelDown> 4<C-E>
 noremap <ScrollWheelUp> 4<C-Y>
 noremap q $
-noremap Q 0
+noremap Q $
+noremap ` 0
+
+" listchars
+set listchars=tab:>-,space:_
+set list
 
 " quit if nerdtree only left
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
 " change arrow
 let g:NERDTreeDirArrowExpandable = '>'
 let g:NERDTreeDirArrowCollapsible = 'v'
+						
 " file type setting
 function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
     exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
     exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
 endfunction
 
- call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
+call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
 call NERDTreeHighlightFile('ini', 'yellow', 'none', 'yellow', '#151515')
 call NERDTreeHighlightFile('md', 'blue', 'none', '#3366FF', '#151515')
 call NERDTreeHighlightFile('yml', 'yellow', 'none', 'yellow', '#151515')
@@ -94,22 +97,30 @@ set undodir=~/.vim/undo         " persistent undo storage
 set undofile                    " persistent undo on
 
 " whitespace
-set ts=4 "tab width
 set autoindent                  " keep indenting on <CR>
-"set shiftwidth=4                " one tab = four spaces (autoindent)
-"set softtabstop=4               " one tab = four spaces (tab key)
+set tabstop=4 					" tab width (display \t)
+set shiftwidth=4                " tab width when autoindent
+"set softtabstop=4              " tab width when press tab, by space
 
+set syntax=qsh
 
 " themes
-set syntax=qsh
-set term=xterm-256color
-" set termguicolors
-set t_Co=256
+" 1111
+set termguicolors
 set t_ut=
-let g:neodark#use_256color = 1
-let g:neodark#terminal_transparent = 1
-colo neodark
-hi Search cterm=NONE ctermbg=lightgrey ctermfg=black
+set background=dark
+colorscheme deep-space
+
+"let g:neodark#background = '#202020'
+"colo neodark
+" 1111
+"set term=xterm-256color
+"set t_Co=256
+"let g:neodark#use_256color = 1
+"let g:neodark#terminal_transparent = 1
+"hi Search cterm=NONE ctermbg=lightgrey ctermfg=black
+
+"Archive
 "colo badwolf
 "colo VisualStudioDark
 "colo base16-default-dark
@@ -120,7 +131,8 @@ set nobackup
 set novisualbell
 set hlsearch
 set so=6 "minimum number to show on screen when scrolling
-set colorcolumn=81
+"set colorcolumn=81
+let &colorcolumn=join(range(81,300),",")
 
 "ctrlshift move, shift move, ..
 nmap <ESC>[1;6A ddkP

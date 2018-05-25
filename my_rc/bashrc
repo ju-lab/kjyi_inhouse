@@ -11,7 +11,7 @@ alias lc="(wc -l | cut -f1)<<"
 alias wget='curl -LO'
 alias sl='sl -e'
 alias find='find -L'
-alias ls='/bin/ls --group-directories-first --width=$((echo 90; echo $(tput col)) | sort -n | head -1) --color=tty --hide "*.Rproj" --hide "*.nb.html" --hide "samtools.*.tmp.*.bam"'
+alias ls='/bin/ls --group-directories-first --width=$((echo 120; echo $(tput col)) | sort -n | head -1) --color=tty --hide "*.Rproj" --hide "*.nb.html" --hide "samtools.*.tmp.*.bam"'
 alias l='/bin/ls --group-directories-first -1 --color=tty --hide "*.Rproj" --hide "*.nb.html" --hide "samtools.*.tmp.*.bam"'
 alias la='/bin/ls --group-directories-first --width=80 --color=tty -lAC'
 alias ll='/bin/ls --group-directories-first --width=80 --color=tty --hide "*.Rproj" --hide "*.nb.html" -ltrG --time-style="+%Y/%m/%d %H:%M"'
@@ -22,10 +22,12 @@ alias qigv='qsub -X -l mem=8G'
 alias setr='eval `setR`'
 alias unsetr='eval `setR a`'
 alias tree='tree -l'
+alias libreoffice='libreoffice --nologo --norestore'
 # java .jar files path in MYJARPATH
 export MYJARPATH=$HOME/jars
 
 # C compile envrionment
+#cat << EOF > /dev/null
 LD_LIBRARY_PATH=$HOME/.lib/gcc-5.4.0/lib:$LD_LIBRARY_PATH
 LD_LIBRARY_PATH=$HOME/.lib/gcc-5.4.0/lib64:$LD_LIBRARY_PATH
 LD_LIBRARY_PATH=$HOME/.lib/htslib-1.5/lib:$LD_LIBRARY_PATH
@@ -51,18 +53,24 @@ CPATH=$HOME/tools/gsl/1.6/include:$CPATH
 CPATH=$HOME/.lib/curl-7.54.1/include:$CPATH
 CPATH=$HOME/.lib/openssl/include:$CPATH
 export CPATH
+#EOF
+
+LD_LIBRARY_PATH=$HOME/anaconda3/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$HOME/anaconda3/lib64:$LD_LIBRARY_PATH
+export CPATH=$HOME/anaconda3/include:$CPATH
 
 # PATH environment
 PATH=/usr/bin:$PATH
 PATH=/usr/java/jre0.8.0_91/bin:$PATH
-PATH=$HOME/anaconda3/bin:$PATH
-PATH=$HOME/../tools/battenberg/bin:$PATH
-PATH=$HOME/.lib/gcc-5.4.0/bin:$PATH
 PATH=$HOME/bin:$PATH
+PATH=$HOME/anaconda2/bin:$PATH
+PATH=$HOME/anaconda3/bin:$PATH
+#PATH=$HOME/../tools/battenberg/bin:$PATH
+#PATH=$HOME/.lib/gcc-5.4.0/bin:$PATH
 PATH=$HOME/tools/texlive/bin/x86_64-linux:$PATH
 PATH=$HOME/tools/gsl/1.6/bin:$PATH
-PATH=$HOME/.lib/curl-7.54.1/bin:$PATH
-PATH=$HOME/.lib/openssl/bin:$PATH
+#PATH=$HOME/.lib/curl-7.54.1/bin:$PATH
+#PATH=$HOME/.lib/openssl/bin:$PATH
 
 export PATH
 
@@ -80,7 +88,7 @@ fi
 
 
 # added by perlbrew
-source /home/users/kjyi/perl5/perlbrew/etc/bashrc
+#source /home/users/kjyi/perl5/perlbrew/etc/bashrc
 
 # User functions
 # track dir -----------------------------------------------------------------
