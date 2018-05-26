@@ -1,5 +1,5 @@
 #!/bin/bash
-. ~/src/parse.sh
+. ~/src/parse
 PARSE $@ << EOF 
 #asdfasdf
 #asdfs
