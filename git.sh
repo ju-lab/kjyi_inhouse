@@ -66,3 +66,4 @@ if [[ "$1" = "link" ]]; then
     exit 0
 fi
 $GIT $*
+# asdf
