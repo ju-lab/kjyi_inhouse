@@ -32,7 +32,6 @@ for i in ./bam/*.bam; do
 	(
 		something -- with $i
 		somtething2 -- with $i
-		# never change I in your code.. it iterate 0 1 2 3 0 1 2 3 ...
 	)&
 done
 wait
@@ -40,8 +39,6 @@ wait
 
 ## kill all child processes when parent is killed
 ```
-# only for workstation
-# in server(PBS), all child will be automatically killed by qdel
 trap 'kill -TERM $PID' TERM INT
 for i in ./bam/*.bam; do
 	if [ I == 4 ]; then ((I = I -4)); wait; fi; ((I++))
