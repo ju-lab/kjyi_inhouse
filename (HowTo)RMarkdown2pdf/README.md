@@ -1,5 +1,4 @@
 # Default julab cluster's pdflatex is outdate.
-# Use mine
 - to use specific pdflatex in Rstudio-server, pdflatex must be in right PATH environment
 - the PATH can be set by R command `Sys.setenv`. It is useless to set your bash environment 
   (e.g. export, write in ~/.bashrc, or ~/.bash_profile)
