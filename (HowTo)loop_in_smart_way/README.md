@@ -1,7 +1,7 @@
 # loop in bash script
 
 ## basic
-```
+```bash
 # space seperated list
 for i in a b c; do
 	echo $i
@@ -26,7 +26,7 @@ done
 ```
 
 ## batch jobs
-```
+```bash
 for i in ./bam/*.bam; do
 	if [ I == 4 ]; then ((I = I - 4)); wait; fi; ((I++))
 	(
@@ -38,7 +38,7 @@ wait
 ```
 
 ## kill all child processes when parent is killed
-```
+```bash
 trap 'kill -TERM $PID' TERM INT
 for i in ./bam/*.bam; do
 	if [ I == 4 ]; then ((I = I -4)); wait; fi; ((I++))
