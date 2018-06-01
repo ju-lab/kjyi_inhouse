@@ -7,7 +7,7 @@ PARSE $@ << EOF
 <sample_name>		SAMPLE	""
 <in1.fa.gz>			FASTQ1	""
 <in2.fa.gz>			FASTQ2	""
--o|--outdir			OUTDIR	./bam
+-o|--outdir <path>	OUTDIR	./bam
 -l|--log			LOG		./log
 -t|--thread			THREAD	16
 -m|--memory			MEMORY	16G
@@ -17,6 +17,7 @@ PARSE $@ << EOF
 --script			script	false	Do not submit the jobs to PBS, but print the script to standard output 
 --dry				dry		false	Check whether files are exist, then exit
 EOF
+
 
 # Run pipeline
 SCRIPT=~kjyi/src/bwa

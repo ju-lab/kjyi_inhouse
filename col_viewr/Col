@@ -1,0 +1,43 @@
+#!/bin/bash
+if [ $# == 0 ]; then
+	cat <<EOF
+	View tabular data (tsv, csv) (csv support pending)
+	print leading ## starting lines, then align tabular data
+	ommit after 100001
+EOF
+fi
+# extract if gz (less) 
+# sed remove windows-dos style new-line char (^M)
+# sed change ## lines tab to %t%
+# non## lines - no tab lines, add comma to end of line, subst comma to tab ("a,b"aware)
+# change consequtive tabs to tab-na-tab for proper operation with column
+# add ]\t to all start
+# from zero to ] starting lines, if there is a tab not after ]. do some numbering
+# 
+# add all \t~ to end of lines
+# 
+less -f "${1:-/dev/stdin}" | \
+sed -r 's///g
+	/^##/ s/\t/%t%/g;
+	/^##/! {
+		/\t/!{
+			s/"$/",/
+			s/("([^"]*)")?,/\2\t/g
+		}
+		:x; s/(^|\t)\t/\1NA\t/; tx
+		s/^/]\t/
+		s/([^\t]{30})[^\t]*/\1.../g
+	}
+	0,/^]/ {
+		/^##/! s/[^\t]$/&\t/
+		:a
+		/[^]]\t/{
+      		x;:b;s/9(_*)$/_\1/;tb;s/^(_*)$/0\1/;s/$/:0123456789/;s/([^_])(_*):.*\1(.).*/\3\2/;s/_/0/g;x;G;
+      		s/([^]\t]+)\t(.*)\n(.*)/\1[\3]\t\2/;
+      		ta
+    	}
+	}
+	/^##/! s/$/\t~/
+	100001 {s/.*/Ommited after 100,000th line/;q}
+  ' |
+column -t -s $'\t' | sed 's/^][ ]*//;s/%t%/\t/g'|less -S~ 
