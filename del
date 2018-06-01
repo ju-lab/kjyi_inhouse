@@ -1,0 +1,7 @@
+#!/bin/bash
+for i in $@; do
+	echo $(date) $(pwd) $i >> ~/.trash_history
+done
+mkdir -p ~/.trash
+mv $@ ~/.trash
+

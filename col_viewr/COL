@@ -26,7 +26,7 @@ sed -r 's///g
 		}
 		:x; s/(^|\t)\t/\1NA\t/; tx
 		s/^/]\t/
-		s/([^\t]{10})[^\t]*/\1.../g
+		s/([^\t]{40})[^\t]*/\1.../g
 	}
 	0,/^]/ {
 		/^##/! s/[^\t]$/&\t/
@@ -39,5 +39,6 @@ sed -r 's///g
 	}
 	/^##/! s/$/\t~/
 	100001 {s/.*/Ommited after 100,000th line/;q}
-  ' |
-column -t -s $'\t' | sed 's/^][ ]*//;s/%t%/\t/g'|less -S~ 
+  ' |awk 'NR==FNR{for(i=1;i<=NF;i++)
+        max[i] = length($i) > max[i] ? length($i) : max[i]; next}
+{ for(i=1;i<=NF;i++) printf "%-"max[i]"s  ", $i; printf "\n"}' | sed 's/^][ ]*//;s/%t%/\t/g'|less -S~ 
