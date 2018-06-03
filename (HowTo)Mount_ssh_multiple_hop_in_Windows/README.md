@@ -34,5 +34,7 @@ echo -en "Host sv\n\tHostname 9.9.9.9\n ......" > ~/.ssh/config
 #do not make destination dir (..Desktop/Server)
 #the command below will make that dir.
 sshfs sv:/home/users/kijong/myproject /cygdrive/c/Users/kijong/Desktop/Server
+or..
+sshfs sv:/home/users/kijong/myproject Z:
 ```
 
