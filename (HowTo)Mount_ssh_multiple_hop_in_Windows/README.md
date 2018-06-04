@@ -31,9 +31,15 @@ echo -en "Host sv\n\tHostname 9.9.9.9\n ......" > ~/.ssh/config
 5. in cygwin terminal, connect remote dir to a new location (which is not exist in windows)
 
 ```bash
+#first, check your id number and group id number in cygwin
+# just type 
+id
+
+>localaccount, gid
+
 #do not make destination dir (..Desktop/Server)
-#the command below will make that dir.
-sshfs sv:/home/users/kijong/myproject /cygdrive/c/Users/kijong/Desktop/Server
+#the command below will make that dir. set proper uid and gid instead of 999 and 9999
+sshfs -o allow_other -o uid=999 -o gid=9999 sv:/home/users/kijong/myproject /cygdrive/c/Users/kijong/Desktop/Server
 or..
 sshfs sv:/home/users/kijong/myproject Z:
 ```
