@@ -37,10 +37,12 @@ if [[ "$1" = "sync" ]] || [[ "$1" = "s" ]]; then
 				cm=""
 			fi
 			log=~/.git.last.log
+			pushd `git rev-parse --show-toplevel` &> /dev/null
 			echo "git add -A" > $log
 			$GIT add -A &>> $log &&
 	    	$GIT commit -m "`echo $cm | sed 's/^$/./'`" &>> $log &&
 	    	$GIT push &>>$log &&
+			popd &> /dev/null
 			echo "Sync done!" && rm -f $log &&
 			exit 0
 			cat $log

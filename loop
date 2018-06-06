@@ -1,0 +1,11 @@
+trap 'kill -TERM $PID' TERM INT
+for i in ./bam/*.bam; do
+	if [ I == 4 ]; then ((I = I -4)); wait; fi; ((I++))
+	(
+		something --with $i
+		PID="$! $PID"
+		something2 --with $i
+		PID="$! $PID"
+	)&
+done
+wait
