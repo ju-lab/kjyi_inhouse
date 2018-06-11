@@ -6,12 +6,12 @@ PARSE $@ <<EOF
 #Split'N'Trim, and base quality recalibration. Run on Torque/PBS system.
 #
 # Usage: $0 \ 
-#	<--sample_name 'text'> <in1.fa.gz> [in2.fa.gz] \  
+#	<sample_name> <in1.fa.gz> [in2.fa.gz] \  
 #	[options]
 #
-<in1.fa.gz>						FASTQ1				''			gz format
-[in2.fa.gz]						FASTQ2				''			when PE
--s|--sample_name				sample				''			Output prefix
+<sample_name>					sample				""			Output prefix
+<in1.fa.gz>						FASTQ1				""			gz format
+[in2.fa.gz]						FASTQ2				""			when PE
 --outdir_star					outdir_star			./star		
 --outdir_rsem					outdir_rsem			./rsem		
 --outdir_hcall					outdir_hcall		./haplotypeCaller		output dir for haplotype caller
@@ -26,7 +26,6 @@ PARSE $@ <<EOF
 --log							log					./log		
 --memory						MEMORY				8G			memory usage in picard, gatk, and rnaseqc 8G
 --memory_star					memory_star			31gb		memory usage in star 31gb
--m|--mail_address				mail_address		''			
 --picard						picard				~kjyi/tools/picard/2.15.0/picard.jar
 --gatk							gatk				~kjyi/tools/GATK/3.8.0/GenomeAnalysisTK.jar
 --java							java				/usr/java/jre1.7.0_80/bin/java	java for rnaseqc, 1.7
@@ -59,7 +58,7 @@ PARSE $@ <<EOF
 --genomeLoad					genomeLoad						NoSharedMemory
 --sjdbFileChrStartEnd			sjdbFileChrStartEnd				''	Input file as chr<tab>star<tab>end<tab>strand splice jx
 --gatk_flags					gatk_flags						allow_potentially_misencoded_quality_scores				Optional flags for GATK
---script_out					script_out						''	if specified, dont run, but just make script
+--dry							dry								false
 --process						process							all		comma-seperatedd jobs: all,star,rsem,hcall
 EOF
 
@@ -88,10 +87,10 @@ export reference star_index rsem_ref sjdbGTFfile
 
 SCRIPT=~kjyi/src/star
 if [ "$process" == "all" ]; then
-	process="star,rsem,hcall"
+	process="star,rsem"
 fi
 process=${process//,/ }
-if [ "x$script_out" == "x" ]; then
+if [ "x$dry" == "xfalse" ]; then
 	for i in $process; do
 		case $i in
 			star)
@@ -120,9 +119,9 @@ if [ "x$script_out" == "x" ]; then
 		esac
 	done
 else
-	echo -e "#!/bin/bash\n# ENV" > $script_out
+	echo -e "#!/bin/bash\n# ENV"
 	args=`echo $arguments | sed 's/,/ /g'`
-	for i in $args;do echo $i=\"`printenv $i`\" >> $script_out; done	
+	for i in $args;do echo $i=\"`printenv $i`\"; done	
 	for i in $process; do
 		case $i in
 			star) script_files+=" $SCRIPT/star.qsh" ;;
@@ -130,6 +129,6 @@ else
 			hcall) script_files+=" $SCRIPT/hcall.qsh" ;;
 		esac
 	done
-	cat $script_files | sed '/^#PBS/d; /^#!\/bin\/bash/d; /^cd $PBS_O_WORKDIR/d' >> $script_out
+	cat $script_files | sed '/^#PBS/d; /^#!\/bin\/bash/d; /^cd $PBS_O_WORKDIR/d'
 fi
 

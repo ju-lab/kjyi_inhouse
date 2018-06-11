@@ -57,6 +57,7 @@ rm -rf \\\$LOG
 EOF
 F=( \$FILES )
 for ((i=0;i<=\${#F[@]}-2;i=i+2));do
+	echo \$i / \${#F[@]}
 	F1=\${F[i]}
 	F2=\${F[i+1]}
 	python3 ~/src/detect_adapter.py \$F1 2>> \$TRIM |

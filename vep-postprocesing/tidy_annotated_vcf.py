@@ -14,10 +14,10 @@ def argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input_vcf', required=True, help='Input VCF with VEP annotation that will be tidied')
     parser.add_argument('-o', '--output_dir', required=False, default=os.getcwd(), help='Output directory')
-    parser.add_argument('-s', '--sampleName', required=False, default='NA', help='Sample Name in the VCF column to extract VAF info')
 
     args = vars(parser.parse_args())
-    return args['input_vcf'], args['output_dir'], args['sampleName']
+    return args['input_vcf'], args['output_dir']
+
 
 def find_canonical_annotation(vep_annotation_string):
     """VEP annotates with many alternative transcripts as well as canonical transcript
@@ -36,20 +36,6 @@ def find_canonical_annotation(vep_annotation_string):
     if return_status == 0:
         return vep_annotation_string.split(',')[0]
 
-def identify_tumor_column(mutect_vcf, sampleName):
-    """given a tumor sample name, and a mutect_VCF output, finds the index of column that is
-    used as tumor to calculate VAF"""
-    vcfHandle = cyvcf2.VCF(mutect_vcf)
-    try:
-        tumorIndex = vcfHandle.samples.index(sampleName)
-        if tumorIndex == 0:
-            return 0
-        else:
-            return 1
-    except ValueError:
-        print(f'{sampleName} is not present in {mutect_vcf}\nExiting...')
-        sys.exit()
-
 
 def prepare_outputfile(input_vcf, output_dir):
     """Prepares outputfile path. If an outputfile already exists, overwrite by removing original file"""
@@ -58,21 +44,6 @@ def prepare_outputfile(input_vcf, output_dir):
         subprocess.call(shlex.split('rm -rf ' + output_file))
 
     return output_file
-
-
-def strelka_vaf(variant):
-    """takes cyvcf2 variant class info for strelka vcf and calculates VAF"""
-    ref_base = variant.REF
-    alt_base = variant.ALT
-    ref_cnt = variant.format(ref_base + 'U')[1][0] # NORMAL allele count in tumor. [1] is tumor for strelka output
-
-    alt_cnt = variant.format(str(alt_base[0]) + 'U')[1][0] # TUMOR allele count
-    total_cnt = variant.format('AU')[1][0] + variant.format('CU')[1][0] + variant.format('GU')[1][0] + variant.format('TU')[1][0] # only use tier1 allele counts for calculating VAFs
-    print(total_cnt)
-    if total_cnt > 0:
-        return float(alt_cnt/total_cnt)
-    else:
-        return 0 # if coverage is 0 then, this is meaningless
 
 
 def tidy_annotation(input_vcf, output_dir, sampleName):
@@ -118,7 +89,6 @@ def tidy_annotation(input_vcf, output_dir, sampleName):
                 print('Cannot find CSQ in the VCF. Probably NOT VEP annotated. Please run VEP before tidying your VCF file.')
                 print('Exiting...')
                 sys.exit()
-
 
     print(f'Tidy Variant Annotation File Ready for Analysis: {outputfile}')
     return 0

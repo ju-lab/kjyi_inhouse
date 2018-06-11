@@ -5,13 +5,17 @@ if [ "x$1" == "x" ]; then
 # Generate qsh script for (1)adapter sequence detection and (2)generate another script (trim.qsh) to trim them in given fastq files
 # Paired-end sequencing = adapter-help-pe.sh
 # Single-end sequencing = adapter-help-se.sh
+# Input in any order <1.R1> <2.R1>  <3.R1> <4.R1> ...
 
 # Usage:
+
+  adapter-help-pe.sh ./fastq/*.gz > adapter_detection.qsh
+	  or
   adapter-help-se.sh ./fastq/*.gz > adapter_detection.qsh
   qsub adapter_detection.qsh
 
 # then, check trim.qsh, and then,
-qsub trim.qsh  # log will be stored in the same directory of fastq (*.cutadapt.log)
+  qsub trim.qsh
 eof
 exit 0
 fi
@@ -42,7 +46,7 @@ rm -rf \$TRIM
 cat <<EOF > \$TRIM
 #!/bin/bash
 #PBS -N cut_adapt
-#PBS -q weak
+#PBS -q day
 #PBS -o /dev/null
 #PBS -e /dev/null
 #PBS -l nodes=1:ppn=2,mem=8gb
@@ -53,12 +57,15 @@ mkdir -p ./log
 rm -rf \\\$LOG
 ##############################
 EOF
-for F in \$FILES;do
-	python3 ~/src/detect_adapter.py \$F 2>> \$TRIM |
-	sed '$ s/^/AD=/; $ s/\t/;F=/' >> \$TRIM
+F=( \$FILES )
+for i in \${#F[@]};do
+	echo \$i / \${#F[@]}
+	F1=\${F[i]}
+	python3 ~/src/detect_adapter.py \$F1 2>> \$TRIM |
+	sed '$ s/^/AD1=/; $ s/\t/;F1=/' >> \$TRIM
 	cat <<EOF >> \$TRIM
-O=\\\$(echo \\\$i | sed 's/[^/]*$/trim_&/')
-cutadapt -m 5 -e \\\$ERR_RATE -a \\\$AD -o \\\$O \\\$F >>\\\${F/.fastq.gz}'.cutadapt.log'
+O1=\\\$(echo \\\$F1 | sed 's/[^/]*$/trim_&/');
+cutadapt -m 5 -e \\\$ERR_RATE -a \\\$AD1 -o \\\$O1 \\\$F1 >>\\\${F1/.fastq.gz}'.cutadapt.log'
 EOF
 done
 exit 0 

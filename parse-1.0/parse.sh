@@ -53,7 +53,7 @@ PARSE() {
 		unset 'ArGss[iIiI]'
     done
     REMAIN=( "${ArGss[@]}" )
-    for i in "${!POoOOS[@]}"; do
+    for iIiI in "${!POoOOS[@]}"; do
 	eval "${POoOOS[iIiI]}=\"${REMAIN[iIiI]}\""
     done
     arguments=`echo ${VarS[@]} |sed 's/ /,/g'`
