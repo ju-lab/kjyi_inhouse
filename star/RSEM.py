@@ -1,4 +1,4 @@
-#!/home/users/kjyi/anaconda3/bin/python
+#!/home/users/kjyi/anaconda3/bin/python3
 # Author: Francois Aguet
 
 import argparse
