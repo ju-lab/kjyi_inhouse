@@ -44,3 +44,8 @@ or..
 sshfs sv:/home/users/kijong/myproject Z:
 ```
 
+
+make a shellscript in cygwin, and make a shortcut at the desktop
+```
+C:\cygwin64\bin\mintty.exe /bin/bash -li mount_server.sh
+```
