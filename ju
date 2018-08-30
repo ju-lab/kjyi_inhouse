@@ -1,0 +1,5 @@
+where=$(echo $HOSTNAME| sed 's/bnode//')
+#echo jupyter lab --ip=0.0.0.0 --port=710${where} --log-level=30 --no-browser --notebook-dir='/home/users/kjyi/Projects'
+#jupyter lab --ip=0.0.0.0 --port=710${where} --log-level=30 --no-browser --notebook-dir='/home/users/kjyi/Projects' 2>&1 |\
+#sed 's/0\.0\.0\.0/143.248.19.80/;s/bnode./143.248.19.80/;s/^[ ]*//'
+jupyter lab --ip=0.0.0.0 --port=710${where} --log-level=30 --no-browser --notebook-dir='/home/users/kjyi/Projects'

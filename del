@@ -1,7 +1,12 @@
 #!/bin/bash
+if [ $1 == flush ]; then
+	echo > ~/.trash_history
+	rm -rf ~/.trash
+	exit 1
+fi
+
 for i in $@; do
-	echo $(date) $(pwd) $i >> ~/.trash_history
+	echo $(date +%Y%m/%d_%k:%M:%S) $(pwd) $i >> ~/.trash_history
 done
 mkdir -p ~/.trash
 mv $@ ~/.trash
-

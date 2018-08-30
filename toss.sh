@@ -37,6 +37,14 @@ if [ -d `cat ~/.toss` ]; then
 	elif [ "x$1" == "xcp" ]; then
 		echo cp
 		cp -a "${@:2}" `cat ~/.toss`
+	elif [ "x$1" == "xswap" ]; then
+		echo mv and make symbolic link
+		echo "${@:2} <--> `cat ~/.toss`"
+		mv "${@:2}" `cat ~/.toss`
+		for i in ${@:2};do
+			ln -s `cat ~/.toss`/`basename $i` $(dirname $i)
+		done
+
 	else
 		echo "no command $1; do one of mv/cp/ln"
 	fi

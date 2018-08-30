@@ -1,0 +1,6 @@
+. ~/src/parse 
+PARSE $@ <<EOF
+-P	total_process	12
+-p	this_process	1
+EOF
+semaphoric --max-procs=$((total_process/this_process)) $(pwd) "$(cat /dev/stdin)" &

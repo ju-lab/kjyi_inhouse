@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -q week
+#PBS -o /dev/null
+#PBS -e /dev/null
+#PBS -l nodes=1:ppn=24
+#PBS -N jobname
+
+for i in *.bam; do
+	input=$i
+	output=$(echo $i | sed 's/bam$/vcf/')
+	log=$(echo $i | sed 's/bam$/log/')
+
+	rm -f  ${log/.log/.fail}
+	if [ ! -f ${log/.log/.done} ]; then
+	(semaphoric --max-procs=24 jobname \
+	\
+	"command $input $output" \
+	\
+	&> $log && mv $log ${log/.log/.done} || mv $log ${log/.log/.fail}) &
+	fi
+	sleep 1
+done
+wait

@@ -2,7 +2,7 @@
 
 import re
 import os
-os.system('ssh 10.0.2.243 -p 2030 pbsnodes -q > ~/.pbsnodes.txt')
+os.system('pbsnodes -q > ~/.pbsnodes.txt')
 file_path = os.path.expanduser('~/.pbsnodes.txt')
 with open(file_path, 'r') as f:
     nodes = []

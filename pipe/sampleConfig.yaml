@@ -1,0 +1,3 @@
+samples:
+    a: data/samples/A.fastq
+    b: data/samples/B.fastq

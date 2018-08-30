@@ -1,8 +1,8 @@
 #!/bin/bash
-#PBS -e /dev/null
 #PBS -o /dev/null
-cd $PBS_O_WORKDIR
-java=~kjyi/bin/java
+#PBS -e /dev/null
+if [ -n "$PBS_O_WORKDIR" ]; then cd $PBS_O_WORKDIR; fi
+java=~kjyi/src/java.sh
 tumor_name=`$java -jar gatk4.jar GetSampleName -I $input_tumor -O /dev/stdout 2>/dev/null`
 normal_name=`$java -jar gatk4.jar GetSampleName -I $input_normal -O /dev/stdout 2>/dev/null`
 LOG=$log/$tumor_name.mutect2.log
